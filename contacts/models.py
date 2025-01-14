@@ -15,6 +15,7 @@ class Contact(models.Model):
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=15)
     organization = models.CharField(max_length=100, blank=True)
+    verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -31,5 +32,6 @@ class Contact(models.Model):
             'name': self.name,
             'email': self.email,
             'phone': self.phone,
-            'organization': self.organization
+            'organization': self.organization,
+            'verified': self.verified
         }

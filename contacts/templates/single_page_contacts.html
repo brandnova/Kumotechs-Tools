@@ -49,6 +49,9 @@
                             Organization
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Verified
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                         </th>
                     </tr>
@@ -88,6 +91,13 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-500">{{ contact.organization|default:"-" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button onclick="toggleVerification({{ contact.id }}, {{ contact.verified|yesno:'true,false' }})"
+                                    class="px-2 py-1 rounded-full text-xs font-medium {% if contact.verified %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %} transition-colors">
+                                <i class="fas {% if contact.verified %}fa-check-circle{% else %}fa-times-circle{% endif %} mr-1"></i>
+                                {{ contact.verified|yesno:"Verified,Unverified" }}
+                            </button>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-3">
@@ -211,6 +221,15 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-500">${contact.organization || '-'}</div>
                 </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <button onclick="toggleVerification(${contact.id}, ${contact.verified})"
+                            class="px-2 py-1 rounded-full text-xs font-medium ${
+                                contact.verified ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            } transition-colors">
+                        <i class="fas ${contact.verified ? 'fa-check-circle' : 'fa-times-circle'} mr-1"></i>
+                        ${contact.verified ? 'Verified' : 'Unverified'}
+                    </button>
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div class="flex space-x-3">
                         <button onclick="editContact(${contact.id})" 
@@ -296,6 +315,47 @@
         editingContactId = contactId;
         showModal('Edit Contact');
     }
+
+    async function toggleVerification(contactId, currentStatus) {
+        try {
+            const button = document.querySelector(`tr[data-contact-id="${contactId}"] button`);
+            const newStatus = !currentStatus;
+            
+            const response = await fetch(`/contacts/${contactId}/update/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    verified: newStatus,
+                    update_verification_only: true
+                })
+            });
+    
+            if (!response.ok) throw new Error('Failed to update verification status');
+    
+            const updatedContact = await response.json();
+            
+            // Update the button attributes and appearance
+            button.onclick = () => toggleVerification(contactId, newStatus);
+            
+            if (updatedContact.verified) {
+                button.classList.remove('bg-gray-100', 'text-gray-800');
+                button.classList.add('bg-green-100', 'text-green-800');
+                button.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Verified';
+            } else {
+                button.classList.remove('bg-green-100', 'text-green-800');
+                button.classList.add('bg-gray-100', 'text-gray-800');
+                button.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Unverified';
+            }
+            
+            showNotification(`Contact ${updatedContact.verified ? 'verified' : 'unverified'} successfully`, 'success');
+        } catch (error) {
+            showNotification(error.message, 'error');
+        }
+    }
+    
 
     async function deleteContact(contactId) {
         if (!confirm('Are you sure you want to delete this contact?')) return;
