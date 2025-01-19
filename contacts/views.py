@@ -61,8 +61,13 @@ def delete_contact(request, contact_id):
         return JsonResponse({'error': str(e)}, status=400)
     
 @csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "OPTIONS"])
 def public_submit_contact(request):
+    if request.method == "OPTIONS":
+        response = HttpResponse()
+        response["Allow"] = "POST, OPTIONS"
+        return response
+
     try:
         data = json.loads(request.body)
         
