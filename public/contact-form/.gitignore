@@ -11,8 +11,6 @@ node_modules
 dist
 dist-ssr
 *.local
-.env
-React Guide.js
 
 # Editor directories and files
 .vscode/*
