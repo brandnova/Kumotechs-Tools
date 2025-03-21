@@ -60,8 +60,8 @@ pip install django
 
 1. Create a new Django project:
 ```bash
-django-admin startproject contact_manager
-cd contact_manager
+django-admin startproject kmt_tools
+cd kmt_tools
 ```
 
 2. Create a new app:
@@ -75,7 +75,7 @@ python manage.py startapp contacts
    - Copy `urls.py` content to `contacts/urls.py`
    - Create a `templates` folder in your `contacts` app and copy the template files there
 
-4. Add 'contacts' to INSTALLED_APPS in `contact_manager/settings.py`:
+4. Add 'contacts' to INSTALLED_APPS in `kmt_tools/settings.py`:
 ```python
 INSTALLED_APPS = [
     'django.contrib.admin',

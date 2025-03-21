@@ -1,5 +1,5 @@
 """
-ASGI config for contact_manager project.
+ASGI config for kmt_tools project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'contact_manager.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kmt_tools.settings')
 
 application = get_asgi_application()

@@ -1,5 +1,5 @@
 """
-WSGI config for contact_manager project.
+WSGI config for kmt_tools project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'contact_manager.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kmt_tools.settings')
 
 application = get_wsgi_application()
