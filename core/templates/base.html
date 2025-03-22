@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kumotechs Tools{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .sidebar-link.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid #3b82f6;
+        }
+    </style>
+</head>
+
+<body class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+    <!-- Header with modern gradient and responsive padding -->
+    <header class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'home' %}" class="flex items-center space-x-3">
+                        <i class="fas fa-tools text-2xl sm:text-3xl"></i>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Kumotechs Tools</h1>
+                    </a>
+                </div>
+                <nav class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        {% if request.resolver_match.url_name != 'dashboard' and request.resolver_match.url_name != 'home' %}
+                            <a href="{% url 'dashboard' %}" class="text-white hover:text-blue-200 font-medium hidden sm:inline-block">Dashboard</a>
+                        {% endif %}
+                        <span class="hidden md:inline text-sm text-white">Hello, {{ user.username }}</span>
+                        <a href="{% url 'logout' %}" class="text-white hover:text-blue-200 font-medium">Logout</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-white hover:text-blue-200 font-medium">Login</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content with responsive padding and sidebar -->
+    <div class="flex-grow flex">
+        {% if user.is_authenticated and request.resolver_match.url_name != 'home' %}
+        <!-- Sidebar for navigation between tools -->
+        <div class="hidden md:block w-64 bg-white dark:bg-gray-800 shadow-md">
+            <nav class="px-3 py-4 flex flex-col h-full">
+                <div class="mb-6">
+                    <h2 class="text-gray-500 uppercase text-xs font-semibold px-3 mb-2">Tools</h2>
+                    <div class="space-y-1">
+                        <a href="{% url 'dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <i class="fas fa-home mr-3 text-gray-500 dark:text-gray-400"></i>
+                            Dashboard
+                        </a>
+                        <a href="{% url 'manage_contacts' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'contacts' in request.path %}active{% endif %}">
+                            <i class="fas fa-address-book mr-3 text-gray-500 dark:text-gray-400"></i>
+                            Contacts
+                        </a>
+                        <a href="{% url 'shortlinks:shortener' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'shortlinks' in request.path %}active{% endif %}">
+                            <i class="fas fa-link mr-3 text-gray-500 dark:text-gray-400"></i>
+                            URL Shortener
+                        </a>
+                        <a href="{% url 'media_toolkit:dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'media-toolkit' in request.path %}active{% endif %}">
+                            <i class="fas fa-images mr-3 text-gray-500 dark:text-gray-400"></i>
+                            Media Toolkit
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        {% endif %}
+
+        <!-- Main content area -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Mobile navigation menu for smaller screens (only for authenticated users) -->
+            {% if user.is_authenticated and request.resolver_match.url_name != 'home' %}
+            <div class="md:hidden mb-6 bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Tools</span>
+                    <button id="mobile-menu-button" class="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+                <div id="mobile-menu" class="hidden mt-3 space-y-2">
+                    <a href="{% url 'dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-50 dark:bg-gray-700{% endif %}">
+                        <i class="fas fa-home mr-3"></i>Dashboard
+                    </a>
+                    <a href="{% url 'manage_contacts' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'contacts' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
+                        <i class="fas fa-address-book mr-3"></i>Contacts
+                    </a>
+                    <a href="{% url 'shortlinks:shortener' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'shortlinks' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
+                        <i class="fas fa-link mr-3"></i>URL Shortener
+                    </a>
+                    <a href="{% url 'media_toolkit:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'media-toolkit' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
+                        <i class="fas fa-images mr-3"></i>Media Toolkit
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if 'contacts' in request.path %}
+                <div class="flex items-center justify-end mb-6">
+                    <a href="{% url 'export_vcf' %}" class="inline-flex items-center text-white px-4 py-2 bg-blue-700 hover:bg-blue-800 rounded-lg shadow transition-colors">
+                        <i class="fas fa-download mr-2"></i>Export VCF
+                    </a>
+                </div>
+            {% endif %}
+
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Footer with modern design -->
+    <footer class="bg-gray-800 text-gray-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                <p class="text-sm">&copy; 2025 Kumotechs. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

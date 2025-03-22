@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Kumotechs Tools{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Welcome to Kumotechs Tools</h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Select a tool to get started or view your recent activity below.</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Tool cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Contacts Tool Card -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                        <i class="fas fa-address-book text-white text-xl"></i>
+                    </div>
+                    <div class="ml-5">
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-white">Contact Manager</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage and export your contacts as VCF files</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <a href="{% url 'manage_contacts' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Open <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- URL Shortener Tool Card -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
+                        <i class="fas fa-link text-white text-xl"></i>
+                    </div>
+                    <div class="ml-5">
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-white">URL Shortener</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Create and manage shortened URLs</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <a href="{% url 'shortlinks:shortener' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Open <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-800 dark:text-white">Recent Activity</h2>
+        </div>
+        
+        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+            <!-- Recent URLs -->
+            {% if recent_links %}
+            <div class="px-6 py-5">
+                <h3 class="text-sm font-medium text-gray-800 dark:text-white mb-3">Recent URLs</h3>
+                <ul class="space-y-3">
+                    {% for link in recent_links %}
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-link text-indigo-500 mr-3"></i>
+                            <span class="text-sm text-gray-700 dark:text-gray-300 truncate max-w-xs">{{ link.original_url|truncatechars:40 }}</span>
+                        </div>
+                        <div class="text-sm text-gray-500">{{ link.created_at|date:"M d, Y" }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-3">
+                    <a href="{% url 'shortlinks:shortener' %}" class="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">View all URLs</a>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Recent Contacts -->
+            {% if recent_contacts %}
+            <div class="px-6 py-5">
+                <h3 class="text-sm font-medium text-gray-800 dark:text-white mb-3">Recent Contacts</h3>
+                <ul class="space-y-3">
+                    {% for contact in recent_contacts %}
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-user text-blue-500 mr-3"></i>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">{{ contact.name }}</span>
+                        </div>
+                        <div class="text-sm text-gray-500">{{ contact.created_at|date:"M d, Y" }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-3">
+                    <a href="{% url 'manage_contacts' %}" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">View all contacts</a>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if not recent_links and not recent_contacts %}
+            <div class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                <p>No recent activity found. Start using the tools to see your activity here.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

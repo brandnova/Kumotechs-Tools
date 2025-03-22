@@ -1,5 +1,5 @@
-# models.py
 from django.db import models
+from django.contrib.auth.models import User
 
 class Contact(models.Model):
     PREFIX_CHOICES = [
@@ -10,6 +10,7 @@ class Contact(models.Model):
         ('Dr.', 'Dr.'),
     ]
     
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='contacts')
     prefix = models.CharField(max_length=4, choices=PREFIX_CHOICES, blank=True)
     name = models.CharField(max_length=100)
     email = models.EmailField(blank=True)

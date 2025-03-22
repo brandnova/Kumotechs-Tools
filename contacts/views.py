@@ -1,23 +1,26 @@
-# views.py
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from .models import Contact
 import json
 
 
+@login_required
 @ensure_csrf_cookie
 def manage_contacts(request):
-    contacts = Contact.objects.all()
-    return render(request, "single_page_contacts.html", {"contacts": contacts})
+    contacts = Contact.objects.filter(owner=request.user)
+    return render(request, "contacts/single_page_contacts.html", {"contacts": contacts})
 
+@login_required
 @require_http_methods(["POST"])
 def create_contact(request):
     try:
         data = json.loads(request.body)
         contact = Contact.objects.create(
+            owner=request.user,
             prefix=data.get('prefix', ''),
             name=data.get('name'),
             email=data.get('email', ''),
@@ -29,11 +32,12 @@ def create_contact(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+@login_required
 @require_http_methods(["PUT"])
 def update_contact(request, contact_id):
     try:
         data = json.loads(request.body)
-        contact = get_object_or_404(Contact, id=contact_id)
+        contact = get_object_or_404(Contact, id=contact_id, owner=request.user)
         
         if data.get('update_verification_only'):
             contact.verified = data.get('verified', False)
@@ -51,10 +55,11 @@ def update_contact(request, contact_id):
         return JsonResponse({'error': str(e)}, status=400)
 
 
+@login_required
 @require_http_methods(["DELETE"])
 def delete_contact(request, contact_id):
     try:
-        contact = get_object_or_404(Contact, id=contact_id)
+        contact = get_object_or_404(Contact, id=contact_id, owner=request.user)
         contact.delete()
         return JsonResponse({'success': True})
     except Exception as e:
@@ -71,14 +76,22 @@ def public_submit_contact(request):
     try:
         data = json.loads(request.body)
         
-        # Check if contact with same email or phone exists
-        if Contact.objects.filter(email=data.get('email')).exists():
+        # Get the admin user for public submissions (first superuser)
+        from django.contrib.auth.models import User
+        admin_user = User.objects.filter(is_superuser=True).first()
+        
+        if not admin_user:
+            return JsonResponse({'error': 'No admin user found to assign contact to'}, status=500)
+        
+        # Check if contact with same email or phone exists for this admin
+        if Contact.objects.filter(owner=admin_user, email=data.get('email')).exists():
             return JsonResponse({'error': 'Contact with this email already exists'}, status=400)
-        if Contact.objects.filter(phone=data.get('phone')).exists():
+        if Contact.objects.filter(owner=admin_user, phone=data.get('phone')).exists():
             return JsonResponse({'error': 'Contact with this phone number already exists'}, status=400)
         
-        # Create new contact (verified=False by default)
+        # Create new contact (verified=False by default) assigned to admin
         contact = Contact.objects.create(
+            owner=admin_user,
             prefix=data.get('prefix', ''),
             name=data.get('name'),
             email=data.get('email', ''),
@@ -97,9 +110,10 @@ def public_submit_contact(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
+@login_required
 def export_vcf(request):
-    # Only get verified contacts
-    contacts = Contact.objects.filter(verified=True)
+    # Only get verified contacts owned by the requesting user
+    contacts = Contact.objects.filter(owner=request.user, verified=True)
     response = HttpResponse(content_type="text/vcard")
     response["Content-Disposition"] = "attachment; filename=contacts.vcf"
 

@@ -1,0 +1,473 @@
+<!-- single_page_contacts.html -->
+{% extends "base.html" %}
+
+{% block title %}Manage Contacts{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-lg rounded-lg overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h2 class="text-2xl font-semibold text-gray-800">
+                <i class="fas fa-users mr-2"></i>Contacts
+            </h2>
+            <button id="add-contact-button" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-colors">
+                <i class="fas fa-plus mr-2"></i>Add Contact
+            </button>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="mb-6">
+            <div class="relative">
+                <input type="text" id="search-contacts" 
+                       placeholder="Search contacts..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+        </div>
+
+        <!-- Contacts Table -->
+        <div class="table-container overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 responsive-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Name
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Email
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Phone
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Organization
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Verified
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="contact-list" class="bg-white divide-y divide-gray-200">
+                    {% for contact in contacts %}
+                    <tr data-contact-id="{{ contact.id }}" class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-gray-500"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {% if contact.prefix %}{{ contact.prefix }} {% endif %}{{ contact.name }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-500">
+                                {% if contact.email %}
+                                    <a href="mailto:{{ contact.email }}" class="hover:text-blue-600 transition-colors">
+                                        {{ contact.email }}
+                                    </a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-500">
+                                <a href="tel:{{ contact.phone }}" class="hover:text-blue-600 transition-colors">
+                                    {{ contact.phone }}
+                                </a>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-500">{{ contact.organization|default:"-" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button onclick="toggleVerification({{ contact.id }}, {{ contact.verified|yesno:'true,false' }})"
+                                    class="px-2 py-1 rounded-full text-xs font-medium {% if contact.verified %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %} transition-colors">
+                                <i class="fas {% if contact.verified %}fa-check-circle{% else %}fa-times-circle{% endif %} mr-1"></i>
+                                {{ contact.verified|yesno:"Verified,Unverified" }}
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-3">
+                                <button onclick="editContact({{ contact.id }})" 
+                                        class="text-indigo-600 hover:text-indigo-900 transition-colors">
+                                    <i class="fas fa-edit mr-1"></i>Edit
+                                </button>
+                                <button onclick="deleteContact({{ contact.id }})" 
+                                        class="text-red-600 hover:text-red-900 transition-colors">
+                                    <i class="fas fa-trash-alt mr-1"></i>Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Form Modal -->
+<div id="contact-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal-overlay overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900" id="modal-title">Add New Contact</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="contact-form" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Prefix</label>
+                <select name="prefix" class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">None</option>
+                    <option value="Mr.">Mr.</option>
+                    <option value="Mrs.">Mrs.</option>
+                    <option value="Ms.">Ms.</option>
+                    <option value="Dr.">Dr.</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Name</label>
+                <input type="text" name="name" required
+                       class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" name="email"
+                       class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Phone</label>
+                <input type="tel" name="phone" required
+                       class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Organization</label>
+                <input type="text" name="organization"
+                       class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="closeModal()"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Save Contact
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Global variable to track which contact is being edited
+    let editingContactId = null;
+
+    // Utility function to get CSRF token
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+
+    // Utility function to create a single contact row
+    function createContactRow(contact) {
+        return `
+            <tr data-contact-id="${contact.id}" class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-gray-500"></i>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">
+                                ${contact.prefix ? contact.prefix + ' ' : ''}${contact.name}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">
+                        ${contact.email ? 
+                            `<a href="mailto:${contact.email}" class="hover:text-blue-600 transition-colors">
+                                ${contact.email}
+                            </a>` : 
+                            '-'
+                        }
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">
+                        <a href="tel:${contact.phone}" class="hover:text-blue-600 transition-colors">
+                            ${contact.phone}
+                        </a>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-500">${contact.organization || '-'}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <button onclick="toggleVerification(${contact.id}, ${contact.verified})"
+                            class="px-2 py-1 rounded-full text-xs font-medium ${
+                                contact.verified ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            } transition-colors">
+                        <i class="fas ${contact.verified ? 'fa-check-circle' : 'fa-times-circle'} mr-1"></i>
+                        ${contact.verified ? 'Verified' : 'Unverified'}
+                    </button>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex space-x-3">
+                        <button onclick="editContact(${contact.id})" 
+                                class="text-indigo-600 hover:text-indigo-900 transition-colors">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                        <button onclick="deleteContact(${contact.id})" 
+                                class="text-red-600 hover:text-red-900 transition-colors">
+                            <i class="fas fa-trash-alt mr-1"></i>Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    // Modal management functions
+    function showModal(title = 'Add New Contact') {
+        document.getElementById('modal-title').textContent = title;
+        const modal = document.getElementById('contact-modal');
+        modal.classList.remove('hidden');
+        // Focus on the name input when modal opens
+        setTimeout(() => {
+            document.querySelector('input[name="name"]').focus();
+        }, 100);
+    }
+
+    function closeModal() {
+        document.getElementById('contact-modal').classList.add('hidden');
+        document.getElementById('contact-form').reset();
+        editingContactId = null;
+    }
+
+    // Notification system
+    function showNotification(message, type = 'success') {
+        // Remove any existing notifications first
+        const existingNotifications = document.querySelectorAll('.notification');
+        existingNotifications.forEach(notification => notification.remove());
+
+        const notification = document.createElement('div');
+        notification.className = `notification fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white ${
+            type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        } shadow-lg notification-slide-in z-50`;
+        
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 500);
+        }, 3000);
+    }
+
+    // Contact CRUD operations
+    async function editContact(contactId) {
+        const row = document.querySelector(`tr[data-contact-id="${contactId}"]`);
+        const form = document.getElementById('contact-form');
+        
+        // Extract data from the row
+        const nameCell = row.querySelector('td:first-child .text-sm.font-medium').textContent.trim();
+        const emailCell = row.querySelector('td:nth-child(2) .text-sm').textContent.trim();
+        const phoneCell = row.querySelector('td:nth-child(3) .text-sm').textContent.trim();
+        const orgCell = row.querySelector('td:nth-child(4) .text-sm').textContent.trim();
+        
+        // Parse prefix and name
+        const prefixMatch = nameCell.match(/^(Mr\.|Mrs\.|Ms\.|Dr\.)\s/);
+        const prefix = prefixMatch ? prefixMatch[1] : '';
+        const name = prefix ? nameCell.substring(prefix.length + 1) : nameCell;
+        
+        // Populate form
+        form.elements.prefix.value = prefix;
+        form.elements.name.value = name;
+        form.elements.email.value = emailCell === '-' ? '' : emailCell;
+        form.elements.phone.value = phoneCell;
+        form.elements.organization.value = orgCell === '-' ? '' : orgCell;
+        
+        editingContactId = contactId;
+        showModal('Edit Contact');
+    }
+
+    async function toggleVerification(contactId, currentStatus) {
+        try {
+            const button = document.querySelector(`tr[data-contact-id="${contactId}"] button`);
+            const newStatus = !currentStatus;
+            
+            const response = await fetch(`/contacts/manage/${contactId}/update/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    verified: newStatus,
+                    update_verification_only: true
+                })
+            });
+    
+            if (!response.ok) throw new Error('Failed to update verification status');
+    
+            const updatedContact = await response.json();
+            
+            // Update the button attributes and appearance
+            button.onclick = () => toggleVerification(contactId, newStatus);
+            
+            if (updatedContact.verified) {
+                button.classList.remove('bg-gray-100', 'text-gray-800');
+                button.classList.add('bg-green-100', 'text-green-800');
+                button.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Verified';
+            } else {
+                button.classList.remove('bg-green-100', 'text-green-800');
+                button.classList.add('bg-gray-100', 'text-gray-800');
+                button.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Unverified';
+            }
+            
+            showNotification(`Contact ${updatedContact.verified ? 'verified' : 'unverified'} successfully`, 'success');
+        } catch (error) {
+            showNotification(error.message, 'error');
+        }
+    }
+    
+
+    async function deleteContact(contactId) {
+        if (!confirm('Are you sure you want to delete this contact?')) return;
+        
+        try {
+            const response = await fetch(`/contacts/manage/${contactId}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+            
+            if (response.ok) {
+                const row = document.querySelector(`tr[data-contact-id="${contactId}"]`);
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+                showNotification('Contact deleted successfully', 'success');
+            } else {
+                throw new Error('Failed to delete contact');
+            }
+        } catch (error) {
+            showNotification(error.message, 'error');
+        }
+    }
+
+    // Search functionality
+    function setupSearch() {
+        const searchInput = document.getElementById('search-contacts');
+        let debounceTimeout;
+
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#contact-list tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    const shouldShow = text.includes(searchTerm);
+                    row.style.display = shouldShow ? '' : 'none';
+                    
+                    // Animate opacity for smoother transitions
+                    row.style.opacity = shouldShow ? '1' : '0';
+                    row.style.transition = 'opacity 0.3s ease-in-out';
+                });
+            }, 300); // Debounce for better performance
+        });
+    }
+
+    // Initialize everything when the DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        const addContactButton = document.getElementById('add-contact-button');
+        const contactForm = document.getElementById('contact-form');
+        
+        // Setup event listeners
+        addContactButton.addEventListener('click', () => {
+            showModal();
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('contact-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'contact-modal') {
+                closeModal();
+            }
+        });
+        
+        // Handle form submission
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(contactForm);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const url = editingContactId 
+                    ? `/contacts/manage/${editingContactId}/update/`
+                    : '/contacts/manage/create/';
+                
+                const response = await fetch(url, {
+                    method: editingContactId ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error('Failed to save contact');
+                
+                const contact = await response.json();
+                const newRow = createContactRow(contact);
+                
+                if (editingContactId) {
+                    const oldRow = document.querySelector(`tr[data-contact-id="${editingContactId}"]`);
+                    oldRow.outerHTML = newRow;
+                } else {
+                    document.getElementById('contact-list').insertAdjacentHTML('beforeend', newRow);
+                }
+                
+                closeModal();
+                showNotification(
+                    editingContactId ? 'Contact updated successfully' : 'Contact added successfully',
+                    'success'
+                );
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        });
+        
+        // Setup search functionality
+        setupSearch();
+        
+        // Add keyboard event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    });
+</script>
+{% endblock %}
