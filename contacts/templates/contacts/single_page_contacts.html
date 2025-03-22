@@ -3,12 +3,6 @@
 
 {% block title %}Manage Contacts{% endblock %}
 
-{% block header_actions %}
-<a href="{% url 'export_vcf' %}" class="inline-flex items-center px-4 py-2 bg-blue-700 hover:bg-blue-800 rounded-lg shadow transition-colors">
-    <i class="fas fa-download mr-2"></i>Export VCF
-</a>
-{% endblock %}
-
 {% block content %}
 <div class="bg-white shadow-lg rounded-lg overflow-hidden">
     <div class="p-6 border-b border-gray-200">
@@ -321,7 +315,7 @@
             const button = document.querySelector(`tr[data-contact-id="${contactId}"] button`);
             const newStatus = !currentStatus;
             
-            const response = await fetch(`/contacts/${contactId}/update/`, {
+            const response = await fetch(`/contacts/manage/${contactId}/update/`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -361,7 +355,7 @@
         if (!confirm('Are you sure you want to delete this contact?')) return;
         
         try {
-            const response = await fetch(`/contacts/${contactId}/delete/`, {
+            const response = await fetch(`/contacts/manage/${contactId}/delete/`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRFToken': getCSRFToken()
@@ -431,8 +425,8 @@
             
             try {
                 const url = editingContactId 
-                    ? `/contacts/${editingContactId}/update/`
-                    : '/contacts/create/';
+                    ? `/contacts/manage/${editingContactId}/update/`
+                    : '/contacts/manage/create/';
                 
                 const response = await fetch(url, {
                     method: editingContactId ? 'PUT' : 'POST',

@@ -7,6 +7,7 @@ urlpatterns = [
     path('', include('core.urls')),
     path('contacts/', include('contacts.urls')),
     path('shortlinks/', include('shortlinks.urls')),
+    path('media-toolkit/', include('media_toolkit.urls', namespace='media_toolkit')),
     
     # Redirect path for shortened URLs
     path('s/<slug:slug>/', redirect_to_original, name='shortlink_redirect'),

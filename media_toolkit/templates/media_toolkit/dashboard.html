@@ -1,0 +1,317 @@
+<!-- media_toolkit/templates/media_toolkit/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Media Toolkit{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Media Toolkit</h1>
+        {% if request.user.is_authenticated %}
+        <a href="{% url 'media_toolkit:file_list' %}" class="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+            <span>View All Files</span>
+            <i class="fas fa-arrow-right ml-2"></i>
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Image Processing Card -->
+        <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <i class="fas fa-image mr-2"></i> Image Processing
+                </h2>
+            </div>
+            <div class="p-6">
+                <form action="{% url 'media_toolkit:process_image' %}" method="post" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <!-- File Upload -->
+                    <div>
+                        <label for="image-file" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Image</label>
+                        <div class="mt-1 flex items-center">
+                            <label class="w-full flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md cursor-pointer hover:border-blue-500 dark:hover:border-blue-400">
+                                <div class="space-y-1 text-center">
+                                    <i class="fas fa-upload mx-auto text-3xl text-gray-400"></i>
+                                    <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                        <span>Upload a file</span>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        PNG, JPG, WEBP up to 10MB
+                                    </p>
+                                </div>
+                                <input id="image-file" name="file" type="file" class="sr-only" accept="image/*" required>
+                            </label>
+                        </div>
+                        <div id="image-preview" class="mt-2 hidden">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Selected image: <span id="image-name"></span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Processing Options -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-4">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Processing Options</h3>
+                        
+                        <!-- Format Conversion -->
+                        <div>
+                            <label for="convert_format" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Convert Format</label>
+                            <select name="convert_format" id="convert_format" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                <option value="">Keep Original</option>
+                                <option value="JPEG">Convert to JPG</option>
+                                <option value="PNG">Convert to PNG</option>
+                                <option value="WEBP">Convert to WEBP</option>
+                                <option value="GIF">Convert to GIF</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Compression -->
+                        <div>
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="compress" name="compress" type="checkbox" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="compress" class="font-medium text-gray-700 dark:text-gray-300">Compress Image</label>
+                                    <p class="text-gray-500 dark:text-gray-400">Reduce file size while maintaining quality</p>
+                                </div>
+                            </div>
+                            
+                            <div id="compression-options" class="mt-2 pl-7 hidden">
+                                <label for="compression_quality" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Compression Quality (1-100)
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">Lower = smaller file</span>
+                                </label>
+                                <input type="range" name="compression_quality" id="compression_quality" min="1" max="100" value="85" 
+                                       class="mt-1 block w-full" oninput="document.getElementById('quality-value').innerText = this.value">
+                                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <span>Smaller Size</span>
+                                    <span>Quality: <span id="quality-value">85</span></span>
+                                    <span>Better Quality</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- OCR -->
+                        {% comment %} <div>
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="perform_ocr" name="perform_ocr" type="checkbox" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="perform_ocr" class="font-medium text-gray-700 dark:text-gray-300">Extract Text (OCR)</label>
+                                    <p class="text-gray-500 dark:text-gray-400">Convert text in image to editable text</p>
+                                </div>
+                            </div>
+                        </div> {% endcomment %}
+                    </div>
+                    
+                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-cog mr-2"></i>
+                            Process Image
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- PDF Processing Card -->
+        <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-4">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <i class="fas fa-file-pdf mr-2"></i> PDF Processing
+                </h2>
+            </div>
+            <div class="p-6">
+                <form action="{% url 'media_toolkit:process_pdf' %}" method="post" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <!-- File Upload -->
+                    <div>
+                        <label for="pdf-file" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload PDF</label>
+                        <div class="mt-1 flex items-center">
+                            <label class="w-full flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md cursor-pointer hover:border-purple-500 dark:hover:border-purple-400">
+                                <div class="space-y-1 text-center">
+                                    <i class="fas fa-upload mx-auto text-3xl text-gray-400"></i>
+                                    <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                        <span>Upload a file</span>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        PDF files up to 20MB
+                                    </p>
+                                </div>
+                                <input id="pdf-file" name="file" type="file" class="sr-only" accept="application/pdf" required>
+                            </label>
+                        </div>
+                        <div id="pdf-preview" class="mt-2 hidden">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Selected PDF: <span id="pdf-name"></span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Processing Options -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-4">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Processing Options</h3>
+                        
+                        <!-- Compression -->
+                        <div>
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="compress_pdf" name="compress" type="checkbox" class="focus:ring-purple-500 h-4 w-4 text-purple-600 border-gray-300 dark:border-gray-600 rounded" checked>
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="compress_pdf" class="font-medium text-gray-700 dark:text-gray-300">Compress PDF</label>
+                                    <p class="text-gray-500 dark:text-gray-400">Optimize PDF file size while maintaining readability</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                            <i class="fas fa-cog mr-2"></i>
+                            Process PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Files Section -->
+    {% if recent_files %}
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-700 to-gray-900 p-4">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-history mr-2"></i> Recent Files
+            </h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">File</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for file in recent_files %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if file.processing_type == 'format_conversion' %}
+                                <i class="fas fa-exchange-alt text-blue-500 mr-2"></i> Format
+                            {% elif file.processing_type == 'image_compression' %}
+                                <i class="fas fa-compress-arrows-alt text-green-500 mr-2"></i> Image
+                            {% elif file.processing_type == 'pdf_compression' %}
+                                <i class="fas fa-file-pdf text-purple-500 mr-2"></i> PDF
+                            {% elif file.processing_type == 'ocr' %}
+                                <i class="fas fa-font text-red-500 mr-2"></i> OCR
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ file.original_file.name|slice:"5:" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if file.status == 'pending' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
+                                    Pending
+                                </span>
+                            {% elif file.status == 'processing' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                                    Processing
+                                </span>
+                            {% elif file.status == 'completed' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                    Completed
+                                </span>
+                            {% elif file.status == 'failed' %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
+                                    Failed
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ file.created_at|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'media_toolkit:file_detail' file.id %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if file.status == 'completed' and file.processed_file %}
+                            <a href="{% url 'media_toolkit:download_file' file.id %}" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-3">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'media_toolkit:delete_file' file.id %}" onclick="return confirm('Are you sure you want to delete this file?');" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // File input preview
+    document.addEventListener('DOMContentLoaded', function() {
+        // Image file input
+        const imageFileInput = document.getElementById('image-file');
+        const imagePreview = document.getElementById('image-preview');
+        const imageName = document.getElementById('image-name');
+        
+        if (imageFileInput) {
+            imageFileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const fileName = this.files[0].name;
+                    imageName.textContent = fileName;
+                    imagePreview.classList.remove('hidden');
+                } else {
+                    imagePreview.classList.add('hidden');
+                }
+            });
+        }
+        
+        // PDF file input
+        const pdfFileInput = document.getElementById('pdf-file');
+        const pdfPreview = document.getElementById('pdf-preview');
+        const pdfName = document.getElementById('pdf-name');
+        
+        if (pdfFileInput) {
+            pdfFileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const fileName = this.files[0].name;
+                    pdfName.textContent = fileName;
+                    pdfPreview.classList.remove('hidden');
+                } else {
+                    pdfPreview.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Compression options toggle
+        const compressCheckbox = document.getElementById('compress');
+        const compressionOptions = document.getElementById('compression-options');
+        
+        if (compressCheckbox && compressionOptions) {
+            compressCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    compressionOptions.classList.remove('hidden');
+                } else {
+                    compressionOptions.classList.add('hidden');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

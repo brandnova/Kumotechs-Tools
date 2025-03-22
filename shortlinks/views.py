@@ -20,7 +20,7 @@ def shortlink_dashboard(request):
             shortlink.created_by = request.user
             shortlink.save()
             messages.success(request, "URL shortened successfully!")
-            return redirect('shortlinks:dashboard')
+            return redirect('shortlinks:shortener')
     else:
         form = ShortLinkForm()
     
@@ -29,7 +29,7 @@ def shortlink_dashboard(request):
         'form': form,
         'base_url': base_url,
     }
-    return render(request, 'shortlinks/dashboard.html', context)
+    return render(request, 'shortlinks/shortener.html', context)
 
 def redirect_to_original(request, slug):
     """Redirect users from short link to the original URL"""
@@ -46,4 +46,4 @@ def delete_shortlink(request, pk):
     if request.method == 'POST':
         shortlink.delete()
         messages.success(request, "Short URL deleted successfully!")
-    return redirect('shortlinks:dashboard')
+    return redirect('shortlinks:shortener')
