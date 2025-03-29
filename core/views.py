@@ -33,15 +33,27 @@ def logout_view(request):
 @login_required
 def dashboard(request):
     """Main dashboard view showing recent activity from all tools"""
-    # Get recent links (last 5)
-    recent_links = ShortLink.objects.filter(created_by=request.user).order_by('-created_at')[:5]
+    # Get recent links (last 3)
+    recent_links = ShortLink.objects.filter(created_by=request.user).order_by('-created_at')[:3]
     
-    # Get recent contacts (last 5)
-    recent_contacts = Contact.objects.filter(owner=request.user).order_by('-created_at')[:5]
+    # Get recent contacts (last 3)
+    recent_contacts = Contact.objects.filter(owner=request.user).order_by('-created_at')[:3]
+
+    # Get recent Media (last 3)
+    recent_media = ProcessedFile.objects.filter(user=request.user).order_by('-created_at')[:3]
+    
+    # Get recent website analyses (last 3)
+    try:
+        from webanalyzer.models import WebsiteAnalysis
+        recent_analyses = WebsiteAnalysis.objects.filter(created_by=request.user).order_by('-created_at')[:3]
+    except:
+        recent_analyses = []
     
     context = {
         'recent_links': recent_links,
         'recent_contacts': recent_contacts,
+        'recent_media': recent_media,
+        'recent_analyses': recent_analyses,
     }
     
     return render(request, 'core/dashboard.html', context)

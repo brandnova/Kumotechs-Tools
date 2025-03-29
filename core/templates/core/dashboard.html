@@ -18,7 +18,7 @@
     {% endif %}
 
     <!-- Tool cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Contacts Tool Card -->
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
             <div class="p-6">
@@ -58,7 +58,49 @@
                 </div>
             </div>
         </div>
+
+        <!-- Media Processing Tool Card -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                        <i class="fas fa-images text-white text-xl"></i>
+                    </div>
+                    <div class="ml-5">
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-white">Media Processing</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Convert, compress, and extract text from files</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <a href="{% url 'media_toolkit:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Open <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Website Analyzer Tool Card -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                        <i class="fas fa-globe text-white text-xl"></i>
+                    </div>
+                    <div class="ml-5">
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-white">Website Analyzer</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Analyze websites and detect technology stacks</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <a href="{% url 'webanalyzer:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                        Open <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
+
 
     <!-- Recent Activity Section -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
@@ -67,7 +109,6 @@
         </div>
         
         <div class="divide-y divide-gray-200 dark:divide-gray-700">
-            <!-- Recent URLs -->
             {% if recent_links %}
             <div class="px-6 py-5">
                 <h3 class="text-sm font-medium text-gray-800 dark:text-white mb-3">Recent URLs</h3>
@@ -88,7 +129,32 @@
             </div>
             {% endif %}
             
-            <!-- Recent Contacts -->
+            {% if recent_analyses %}
+            <div class="px-6 py-5">
+                <h3 class="text-sm font-medium text-gray-800 dark:text-white mb-3">Recent Website Analyses</h3>
+                <ul class="space-y-3">
+                    {% for analysis in recent_analyses %}
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-globe text-purple-500 mr-3"></i>
+                            <span class="text-sm text-gray-700 dark:text-gray-300 truncate max-w-xs">
+                                {% if analysis.title %}
+                                    {{ analysis.title|truncatechars:40 }}
+                                {% else %}
+                                    {{ analysis.url|truncatechars:40 }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-500">{{ analysis.created_at|date:"M d, Y" }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-3">
+                    <a href="{% url 'webanalyzer:dashboard' %}" class="text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300">View all analyses</a>
+                </div>
+            </div>
+            {% endif %}
+            
             {% if recent_contacts %}
             <div class="px-6 py-5">
                 <h3 class="text-sm font-medium text-gray-800 dark:text-white mb-3">Recent Contacts</h3>
@@ -109,12 +175,35 @@
             </div>
             {% endif %}
             
-            {% if not recent_links and not recent_contacts %}
+            {% if recent_media %}
+            <div class="px-6 py-5">
+                <h3 class="text-sm font-medium text-gray-800 dark:text-white mb-3">Recent Media</h3>
+                <ul class="space-y-3">
+                    {% for media in recent_media %}
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-file text-green-500 mr-3"></i>
+                            <span class="text-sm text-gray-700 dark:text-gray-300 truncate max-w-xs">{{ media.original_file.name }}</span>
+                            <span class="ml-2 text-xs px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{{ media.get_processing_type_display }}</span>
+                        </div>
+                        <div class="text-sm text-gray-500">{{ media.created_at|date:"M d, Y" }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-3">
+                    <a href="{% url 'media_toolkit:file_list' %}" class="text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">View all media</a>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if not recent_links and not recent_contacts and not recent_media and not recent_analyses %}
             <div class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                 <p>No recent activity found. Start using the tools to see your activity here.</p>
             </div>
             {% endif %}
         </div>
     </div>
+
+
 </div>
 {% endblock %}

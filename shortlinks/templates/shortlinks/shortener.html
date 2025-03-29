@@ -33,6 +33,17 @@
             </div>
             
             <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Link Name (Optional)</label>
+                <div class="mt-1">
+                    {{ form.name }}
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">A friendly name to identify this link</p>
+                {% if form.name.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.name.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
                 <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Custom Slug (Optional)</label>
                 <div class="mt-1">
                     {{ form.slug }}
@@ -62,8 +73,9 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Short URL</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name/Short URL</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Original URL</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">QR Code</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Clicks</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
@@ -73,18 +85,50 @@
                     {% for link in links %}
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{{ base_url }}{{ link.slug }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                                {{ base_url }}{{ link.slug }}
-                            </a>
-                            <button onclick="navigator.clipboard.writeText('{{ base_url }}{{ link.slug }}')" class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                                <i class="fas fa-copy"></i>
-                            </button>
+                            <div class="flex flex-col">
+                                {% if link.name %}
+                                <div class="font-semibold text-gray-800 dark:text-white mb-1">
+                                    {{ link.name }}
+                                    <button onclick="editLinkName('{{ link.pk }}', '{{ link.name }}')" class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                {% endif %}
+                                <a href="{{ base_url }}{{ link.slug }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                    {{ base_url }}{{ link.slug }}
+                                </a>
+                                <button onclick="copyToClipboard('{{ base_url }}{{ link.slug }}')" class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             <div class="max-w-xs overflow-hidden text-ellipsis">
                                 <a href="{{ link.original_url }}" target="_blank" class="hover:underline">
                                     {{ link.original_url|truncatechars:50 }}
                                 </a>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <div class="flex items-center space-x-2">
+                                <div id="qr-container-{{ link.slug }}" class="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                                    {% if link.qr_code %}
+                                        <img src="{{ link.qr_code.url }}" alt="QR Code" class="w-10 h-10">
+                                    {% else %}
+                                        <i class="fas fa-qrcode text-gray-400"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="flex space-x-1">
+                                    <button onclick="generateQRCode('{{ link.slug }}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Generate QR Code">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                    <button onclick="openQRModal('{{ link.slug }}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Customize QR Code">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <a href="{% url 'shortlinks:download_qr' link.slug %}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Download QR Code">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -113,4 +157,249 @@
         {% endif %}
     </div>
 </div>
+
+<!-- QR Code Customization Modal -->
+<div id="qr-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Customize QR Code</h3>
+            <button onclick="closeQRModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="qr-form" method="post" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" id="qr-slug" name="slug" value="">
+            
+            <div>
+                <label for="id_color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">QR Code Color</label>
+                <div class="mt-1">
+                    {{ qr_form.color }}
+                </div>
+            </div>
+            
+            <div>
+                <label for="id_bg_color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Background Color</label>
+                <div class="mt-1">
+                    {{ qr_form.bg_color }}
+                </div>
+            </div>
+            
+            <div>
+                <label for="id_text" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Text (Optional)</label>
+                <div class="mt-1">
+                    {{ qr_form.text }}
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Add text below the QR code (max 50 characters)</p>
+            </div>
+            
+            <div>
+                <label for="id_logo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Logo (Optional)</label>
+                <div class="mt-1">
+                    {{ qr_form.logo }}
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Upload a logo to place in the center of the QR code</p>
+            </div>
+            
+            <div class="flex items-center">
+                <div class="flex items-center h-5">
+                    {{ qr_form.convert_logo_bw }}
+                </div>
+                <div class="ml-3 text-sm">
+                    <label for="id_convert_logo_bw" class="font-medium text-gray-700 dark:text-gray-300">Convert logo to black and white</label>
+                    <p class="text-gray-500 dark:text-gray-400">Makes the logo match the QR code style</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-between">
+                <button type="button" onclick="previewQRCode()" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                    Preview
+                </button>
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Save
+                </button>
+            </div>
+        </form>
+        
+        <div id="qr-preview" class="mt-4 flex justify-center">
+            <div class="w-48 h-48 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <i class="fas fa-qrcode text-gray-400 text-4xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Link Name Edit Modal -->
+<div id="name-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Edit Link Name</h3>
+            <button onclick="closeNameModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="name-form" method="post" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" id="link-id" name="link_id" value="">
+            
+            <div>
+                <label for="link-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Link Name</label>
+                <div class="mt-1">
+                    <input type="text" id="link-name" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript for dynamic features -->
+<script>
+    // Copy to clipboard function
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function() {
+            // Show a temporary success message
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg';
+            notification.textContent = 'Copied to clipboard!';
+            document.body.appendChild(notification);
+            
+            // Remove the notification after 2 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        }).catch(function(err) {
+            console.error('Could not copy text: ', err);
+        });
+    }
+    
+    // QR Code Modal functions
+    function openQRModal(slug) {
+        document.getElementById('qr-slug').value = slug;
+        document.getElementById('qr-form').action = `/shortlinks/qr/customize/${slug}/`;
+        document.getElementById('qr-modal').classList.remove('hidden');
+    }
+    
+    function closeQRModal() {
+        document.getElementById('qr-modal').classList.add('hidden');
+    }
+    
+    // Link Name Modal functions
+    function editLinkName(id, name) {
+        document.getElementById('link-id').value = id;
+        document.getElementById('link-name').value = name || '';
+        document.getElementById('name-form').action = `/shortlinks/update/${id}/`;
+        document.getElementById('name-modal').classList.remove('hidden');
+    }
+    
+    function closeNameModal() {
+        document.getElementById('name-modal').classList.add('hidden');
+    }
+    
+    // Generate QR Code function
+    function generateQRCode(slug) {
+        const container = document.getElementById(`qr-container-${slug}`);
+        container.innerHTML = '<div class="animate-spin"><i class="fas fa-spinner"></i></div>';
+        
+        // Get CSRF token
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Make API request to generate QR code
+        fetch(`/shortlinks/qr/generate/${slug}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                color: '#000000',
+                bg_color: '#FFFFFF'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.qr_code) {
+                container.innerHTML = `<img src="${data.qr_code}" alt="QR Code" class="w-10 h-10">`;
+            } else {
+                container.innerHTML = '<i class="fas fa-exclamation-circle text-red-500"></i>';
+            }
+        })
+        .catch(error => {
+            console.error('Error generating QR code:', error);
+            container.innerHTML = '<i class="fas fa-exclamation-circle text-red-500"></i>';
+        });
+    }
+    
+    // Preview QR Code function
+    function previewQRCode() {
+        const slug = document.getElementById('qr-slug').value;
+        const color = document.getElementById('id_color').value;
+        const bgColor = document.getElementById('id_bg_color').value;
+        const text = document.getElementById('id_text').value;
+        const convertBW = document.getElementById('id_convert_logo_bw').checked;
+        const preview = document.getElementById('qr-preview');
+        
+        preview.innerHTML = '<div class="w-48 h-48 flex items-center justify-center"><div class="animate-spin"><i class="fas fa-spinner"></i></div></div>';
+        
+        // Get CSRF token
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Make API request to generate QR code preview
+        fetch(`/shortlinks/qr/generate/${slug}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                color: color,
+                bg_color: bgColor,
+                text: text,
+                convert_bw: convertBW
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.qr_code) {
+                preview.innerHTML = `<img src="${data.qr_code}" alt="QR Code Preview" class="max-w-full max-h-48">`;
+            } else {
+                preview.innerHTML = '<div class="w-48 h-48 flex items-center justify-center"><i class="fas fa-exclamation-circle text-red-500 text-4xl"></i></div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error generating QR code preview:', error);
+            preview.innerHTML = '<div class="w-48 h-48 flex items-center justify-center"><i class="fas fa-exclamation-circle text-red-500 text-4xl"></i></div>';
+        });
+    }
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', function(event) {
+        const qrModal = document.getElementById('qr-modal');
+        const nameModal = document.getElementById('name-modal');
+        
+        if (event.target === qrModal) {
+            closeQRModal();
+        }
+        
+        if (event.target === nameModal) {
+            closeNameModal();
+        }
+    });
+    
+    // Escape key to close modals
+    window.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeQRModal();
+            closeNameModal();
+        }
+    });
+</script>
 {% endblock %}
+

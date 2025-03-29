@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis of {{ analysis.url }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Website Analysis</h1>
+        <div class="flex space-x-2">
+            <a href="{% url 'webanalyzer:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                Back to List
+            </a>
+            <form method="post" action="{% url 'webanalyzer:reanalyze' analysis.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-sync-alt mr-2"></i> Re-analyze
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Website Info -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white">
+                    {% if analysis.title %}
+                        {{ analysis.title }}
+                    {% else %}
+                        {{ analysis.url }}
+                    {% endif %}
+                </h2>
+                <a href="{{ analysis.url }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-sm mt-1 inline-block">
+                    {{ analysis.url }} <i class="fas fa-external-link-alt ml-1"></i>
+                </a>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+                Analyzed on {{ analysis.created_at|date:"F d, Y" }} at {{ analysis.created_at|time:"H:i" }}
+            </div>
+        </div>
+
+        {% if analysis.description %}
+        <div class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Site Description</h3>
+            <p class="text-gray-600 dark:text-gray-400">{{ analysis.description }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <!-- Fix the screenshot display section -->
+            <!-- Screenshot -->
+            <div>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Screenshot</h3>
+                {% if analysis.screenshot %}
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                    <img src="{{ MEDIA_URL }}{{ analysis.screenshot }}" alt="Screenshot of {{ analysis.url }}" class="w-full h-auto">
+                </div>
+                {% else %}
+                <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-md text-center h-48 flex items-center justify-center">
+                    <div class="text-center">
+                        <p class="text-gray-500 dark:text-gray-400 mb-2">
+                            <i class="fas fa-camera mr-2"></i> Screenshot is being generated...
+                        </p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">
+                            Please refresh the page in a few moments to see the screenshot.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Quick Stats -->
+            <div>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quick Stats</h3>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Status</span>
+                        <span class="text-sm font-medium 
+                            {% if analysis.status_code >= 200 and analysis.status_code < 300 %}
+                                text-green-600 dark:text-green-400
+                            {% elif analysis.status_code >= 300 and analysis.status_code < 400 %}
+                                text-yellow-600 dark:text-yellow-400
+                            {% elif analysis.status_code >= 400 %}
+                                text-red-600 dark:text-red-400
+                            {% else %}
+                                text-gray-600 dark:text-gray-400
+                            {% endif %}
+                        ">
+                            {{ analysis.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Response Time</span>
+                        <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ analysis.response_time }} seconds</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Page Size</span>
+                        <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ analysis.get_page_size_display }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Mobile Friendly</span>
+                        <span class="text-sm font-medium 
+                            {% if analysis.mobile_friendly %}
+                                text-green-600 dark:text-green-400
+                            {% else %}
+                                text-red-600 dark:text-red-400
+                            {% endif %}
+                        ">
+                            {% if analysis.mobile_friendly %}
+                                <i class="fas fa-check-circle mr-1"></i> Yes
+                            {% else %}
+                                <i class="fas fa-times-circle mr-1"></i> No
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    {% if analysis.server %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Server</span>
+                        <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ analysis.server }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Results -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Technologies -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-800 dark:text-white mb-4">Technologies Detected</h3>
+            
+            {% if technologies %}
+            <div class="space-y-3">
+                {% for tech in technologies %}
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
+                        <i class="fas fa-code text-blue-600 dark:text-blue-300"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ tech }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                <i class="fas fa-search text-4xl mb-2"></i>
+                <p>No technologies were detected on this website.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Social Media -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-800 dark:text-white mb-4">Social Media</h3>
+            
+            {% if social_media %}
+            <div class="flex flex-wrap gap-2">
+                {% for platform in social_media %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                    {% if platform == 'Facebook' %}
+                        <i class="fab fa-facebook mr-1"></i>
+                    {% elif platform == 'Twitter' %}
+                        <i class="fab fa-twitter mr-1"></i>
+                    {% elif platform == 'Instagram' %}
+                        <i class="fab fa-instagram mr-1"></i>
+                    {% elif platform == 'LinkedIn' %}
+                        <i class="fab fa-linkedin mr-1"></i>
+                    {% elif platform == 'YouTube' %}
+                        <i class="fab fa-youtube mr-1"></i>
+                    {% elif platform == 'Pinterest' %}
+                        <i class="fab fa-pinterest mr-1"></i>
+                    {% elif platform == 'TikTok' %}
+                        <i class="fab fa-tiktok mr-1"></i>
+                    {% elif platform == 'GitHub' %}
+                        <i class="fab fa-github mr-1"></i>
+                    {% else %}
+                        <i class="fas fa-share-alt mr-1"></i>
+                    {% endif %}
+                    {{ platform }}
+                </span>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                <p>No social media links detected.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-between">
+        <a href="{% url 'webanalyzer:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Analyzer
+        </a>
+        
+        <form method="post" action="{% url 'webanalyzer:delete' analysis.pk %}" class="inline" onsubmit="return confirm('Are you sure you want to delete this analysis?');">
+            {% csrf_token %}
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <i class="fas fa-trash mr-2"></i> Delete Analysis
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
