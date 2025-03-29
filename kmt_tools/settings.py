@@ -26,16 +26,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',
     'django_cleanup',
     'core',
     'contacts',
     'shortlinks',
     'media_toolkit',
+    'webanalyzer',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -116,7 +115,7 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files settings
-MEDIA_URL = '/media/'  # URL to access media files in templates
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Temporary file storage for processed files
 TEMP_ROOT = os.path.join(MEDIA_ROOT, 'temp')
@@ -129,17 +128,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = 'dashboard/'
 LOGOUT_REDIRECT_URL = '/'
-
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vite's default development server
-]
-
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]

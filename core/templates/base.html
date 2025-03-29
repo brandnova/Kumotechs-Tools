@@ -65,6 +65,10 @@
                             <i class="fas fa-images mr-3 text-gray-500 dark:text-gray-400"></i>
                             Media Toolkit
                         </a>
+                        <a href="{% url 'webanalyzer:dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'webanalyzer' in request.path %}active{% endif %}">
+                            <i class="fas fa-globe mr-3 text-gray-500 dark:text-gray-400"></i>
+                            Website Analyzer
+                        </a>
                     </div>
                 </div>
             </nav>

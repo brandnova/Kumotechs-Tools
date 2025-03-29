@@ -1,0 +1,57 @@
+### **Implementing an Image Background Remover in Your Django App**  
+Adding a **background remover** to your Django **Media Toolkit** is **doable**, but the complexity depends on the approach you choose.  
+
+---
+
+## **🔹 Approaches to Implementing Background Removal**
+### **1️⃣ Using `rembg` (Local & Offline) – Easy to Moderate**  
+[`rembg`](https://github.com/danielgatis/rembg) is a Python package that removes image backgrounds using deep learning. It's fast and works locally.
+
+#### **Installation**  
+```bash
+pip install rembg
+```
+
+#### **Usage in Django**  
+Modify your Django view to remove the background from an uploaded image:
+
+```python
+from rembg import remove
+from PIL import Image
+import io
+from django.http import HttpResponse
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
+def remove_bg(request):
+    if request.method == "POST" and request.FILES.get("image"):
+        uploaded_image = request.FILES["image"]
+
+        # Open image using Pillow
+        image = Image.open(uploaded_image)
+
+        # Remove background
+        output_image = remove(image)
+
+        # Save result in memory
+        img_io = io.BytesIO()
+        output_image.save(img_io, format="PNG")
+
+        # Create a new Django file
+        new_file = InMemoryUploadedFile(
+            img_io, None, "bg_removed.png", "image/png", img_io.getbuffer().nbytes, None
+        )
+
+        return HttpResponse(new_file, content_type="image/png")
+
+    return HttpResponse("Upload an image", status=400)
+```
+
+#### **Pros & Cons**  
+✅ **Works offline**  
+✅ **Free to use**  
+⚠️ **Larger file sizes may slow down processing**  
+
+---
+
+
+Implement site stack checker using requests to know the stack a site is built from.
