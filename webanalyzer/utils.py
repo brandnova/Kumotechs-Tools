@@ -300,7 +300,7 @@ def capture_screenshot(url, analysis_id):
         os.makedirs(screenshot_dir, exist_ok=True)
         
         # Generate a unique filename
-        filename = f"screenshot_{analysis_id}_{uuid.uuid4().hex[:8]}.png"
+        filename = f"{uuid.uuid4().hex}.png"
         output_path = os.path.join(screenshot_dir, filename)
         
         # Set up Chrome options
@@ -325,7 +325,6 @@ def capture_screenshot(url, analysis_id):
             driver.save_screenshot(output_path)
             
             # Update the analysis with the screenshot path
-            # Store only the relative path from MEDIA_ROOT
             relative_path = os.path.join('screenshots', filename)
             
             # Check again if the analysis still exists before updating

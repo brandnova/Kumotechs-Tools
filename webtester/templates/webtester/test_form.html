@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ title }}</h1>
+        <a href="{% url 'webtester:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Tests
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Test Form -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Basic Information -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-800 dark:text-white">Basic Information</h3>
+                    
+                    <div>
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Test Name</label>
+                        <div class="mt-1">
+                            {{ form.name }}
+                        </div>
+                        {% if form.name.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.name.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.target_url.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Target URL</label>
+                        <div class="mt-1">
+                            {{ form.target_url }}
+                        </div>
+                        {% if form.target_url.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.target_url.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.http_method.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">HTTP Method</label>
+                        <div class="mt-1">
+                            {{ form.http_method }}
+                        </div>
+                        {% if form.http_method.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.http_method.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Load Test Configuration -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-800 dark:text-white">Load Test Configuration</h3>
+                    
+                    <div>
+                        <label for="{{ form.num_users.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of Virtual Users</label>
+                        <div class="mt-1">
+                            {{ form.num_users }}
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.num_users.help_text }}</p>
+                        {% if form.num_users.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.num_users.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.spawn_rate.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Spawn Rate (users/second)</label>
+                        <div class="mt-1">
+                            {{ form.spawn_rate }}
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.spawn_rate.help_text }}</p>
+                        {% if form.spawn_rate.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.spawn_rate.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.duration.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Test Duration (seconds)</label>
+                        <div class="mt-1">
+                            {{ form.duration }}
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.duration.help_text }}</p>
+                        {% if form.duration.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.duration.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Advanced Options -->
+            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-800 dark:text-white mb-4">Advanced Options</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.headers.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">HTTP Headers (JSON)</label>
+                        <div class="mt-1">
+                            {{ form.headers }}
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.headers.help_text }}</p>
+                        {% if form.headers.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.headers.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.body.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Request Body (JSON)</label>
+                        <div class="mt-1">
+                            {{ form.body }}
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ form.body.help_text }}</p>
+                        {% if form.body.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.body.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    {% if test %}Update Test{% else %}Create Test{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

@@ -11,6 +11,7 @@ urlpatterns = [
     path('shortlinks/', include('shortlinks.urls')),
     path('media-toolkit/', include('media_toolkit.urls', namespace='media_toolkit')),
     path('webanalyzer/', include('webanalyzer.urls', namespace='webanalyzer')),
+    path('webtester/', include('webtester.urls', namespace='webtester')),
     
     # Redirect path for shortened URLs
     path('s/<slug:slug>/', redirect_to_original, name='shortlink_redirect'),

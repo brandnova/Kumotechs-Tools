@@ -9,7 +9,6 @@ from .utils import analyze_website, capture_screenshot
 import json
 import time
 import threading
-from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -71,7 +70,7 @@ def analyzer_dashboard(request):
             thread.daemon = True
             thread.start()
             
-            messages.success(request, f"Successfully analyzed {url}. Screenshot will be captured in the background. You may need to refresh the page after a few moments to see the screenshot.")
+            messages.success(request, f"Successfully analyzed {url}. Screenshot will be captured in the background.")
             return redirect('webanalyzer:detail', pk=analysis.pk)
     else:
         form = WebsiteAnalysisForm()
@@ -92,7 +91,6 @@ def analysis_detail(request, pk):
         'technologies': analysis.get_technologies_list(),
         'meta_tags': analysis.get_meta_tags(),
         'social_media': analysis.get_social_media_list(),
-        'MEDIA_URL': settings.MEDIA_URL,  # Add this line
     }
     return render(request, 'webanalyzer/detail.html', context)
 
@@ -146,7 +144,7 @@ def reanalyze_website(request, pk):
         thread.daemon = True
         thread.start()
         
-        messages.success(request, f"Successfully re-analyzed {analysis.url}. Screenshot will be updated in the background. You may need to refresh the page after a few moments to see the updated screenshot.")
+        messages.success(request, f"Successfully re-analyzed {analysis.url}. Screenshot will be updated in the background.")
         
         return redirect('webanalyzer:detail', pk=analysis.pk)
     
