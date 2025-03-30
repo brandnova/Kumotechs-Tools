@@ -1,5 +1,3 @@
-Thought for 7 seconds### Web Performance Tester: Current Setup and Improvement Options
-
 ## Current Setup Explanation
 
 The current web performance tester is designed to load test websites by simulating concurrent user traffic. Here's how it works:

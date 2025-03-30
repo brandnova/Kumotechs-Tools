@@ -4,12 +4,13 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.forms import inlineformset_factory
+from .models import LoadTest, TestResult, UserJourney, JourneyStep, TestTemplate
+from .forms import LoadTestForm, UserJourneyForm, JourneyStepForm
+from .utils import LoadTester
 import threading
 import json
 
-from .models import LoadTest, TestResult
-from .forms import LoadTestForm
-from .utils import LoadTester
 
 @login_required
 def dashboard(request):
@@ -83,11 +84,164 @@ def test_detail(request, pk):
     # Get test results
     results = test.results.all()
     
+    # Get users data
+    users_data = test.get_users_data_dict()
+    
     context = {
         'test': test,
         'results': results,
+        'users_data': users_data,
     }
     return render(request, 'webtester/test_detail.html', context)
+
+@login_required
+def journey_list(request):
+    """List all user journeys"""
+    journeys = UserJourney.objects.filter(created_by=request.user).order_by('-created_at')
+    
+    context = {
+        'journeys': journeys,
+    }
+    return render(request, 'webtester/journey_list.html', context)
+
+@login_required
+def journey_detail(request, pk):
+    """View details of a user journey"""
+    journey = get_object_or_404(UserJourney, pk=pk, created_by=request.user)
+    steps = journey.steps.all().order_by('order')
+    
+    context = {
+        'journey': journey,
+        'steps': steps,
+    }
+    return render(request, 'webtester/journey_detail.html', context)
+
+@login_required
+def create_journey(request):
+    """Create a new user journey"""
+    if request.method == 'POST':
+        form = UserJourneyForm(request.POST)
+        if form.is_valid():
+            journey = form.save(commit=False)
+            journey.created_by = request.user
+            journey.save()
+            
+            messages.success(request, f"Journey '{journey.name}' created successfully!")
+            return redirect('webtester:journey_detail', pk=journey.pk)
+    else:
+        form = UserJourneyForm()
+    
+    context = {
+        'form': form,
+        'title': 'Create User Journey'
+    }
+    return render(request, 'webtester/journey_form.html', context)
+
+@login_required
+def edit_journey(request, pk):
+    """Edit an existing user journey"""
+    journey = get_object_or_404(UserJourney, pk=pk, created_by=request.user)
+    
+    if request.method == 'POST':
+        form = UserJourneyForm(request.POST, instance=journey)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Journey '{journey.name}' updated successfully!")
+            return redirect('webtester:journey_detail', pk=journey.pk)
+    else:
+        form = UserJourneyForm(instance=journey)
+    
+    context = {
+        'form': form,
+        'journey': journey,
+        'title': 'Edit User Journey'
+    }
+    return render(request, 'webtester/journey_form.html', context)
+
+@login_required
+def delete_journey(request, pk):
+    """Delete a user journey"""
+    journey = get_object_or_404(UserJourney, pk=pk, created_by=request.user)
+    
+    if request.method == 'POST':
+        journey_name = journey.name
+        journey.delete()
+        messages.success(request, f"Journey '{journey_name}' deleted successfully!")
+        return redirect('webtester:journey_list')
+    
+    return redirect('webtester:journey_detail', pk=pk)
+
+@login_required
+def add_journey_step(request, journey_pk):
+    """Add a step to a user journey"""
+    journey = get_object_or_404(UserJourney, pk=journey_pk, created_by=request.user)
+    
+    # Get the next order number
+    next_order = 1
+    if journey.steps.exists():
+        next_order = journey.steps.order_by('-order').first().order + 1
+    
+    if request.method == 'POST':
+        form = JourneyStepForm(request.POST)
+        if form.is_valid():
+            step = form.save(commit=False)
+            step.journey = journey
+            step.save()
+            
+            messages.success(request, f"Step added to journey '{journey.name}' successfully!")
+            return redirect('webtester:journey_detail', pk=journey.pk)
+    else:
+        form = JourneyStepForm(initial={'order': next_order})
+    
+    context = {
+        'form': form,
+        'journey': journey,
+        'title': f'Add Step to {journey.name}'
+    }
+    return render(request, 'webtester/journey_step_form.html', context)
+
+@login_required
+def edit_journey_step(request, journey_pk, step_pk):
+    """Edit a journey step"""
+    journey = get_object_or_404(UserJourney, pk=journey_pk, created_by=request.user)
+    step = get_object_or_404(JourneyStep, pk=step_pk, journey=journey)
+    
+    if request.method == 'POST':
+        form = JourneyStepForm(request.POST, instance=step)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Step updated successfully!")
+            return redirect('webtester:journey_detail', pk=journey.pk)
+    else:
+        form = JourneyStepForm(instance=step)
+    
+    context = {
+        'form': form,
+        'journey': journey,
+        'step': step,
+        'title': f'Edit Step {step.order}'
+    }
+    return render(request, 'webtester/journey_step_form.html', context)
+
+@login_required
+def delete_journey_step(request, journey_pk, step_pk):
+    """Delete a journey step"""
+    journey = get_object_or_404(UserJourney, pk=journey_pk, created_by=request.user)
+    step = get_object_or_404(JourneyStep, pk=step_pk, journey=journey)
+    
+    if request.method == 'POST':
+        step.delete()
+        
+        # Reorder remaining steps
+        for i, s in enumerate(journey.steps.all().order_by('order')):
+            s.order = i + 1
+            s.save()
+        
+        messages.success(request, f"Step deleted successfully!")
+        return redirect('webtester:journey_detail', pk=journey.pk)
+    
+    return redirect('webtester:journey_detail', pk=journey.pk)
+
 
 @login_required
 def run_test(request, pk):
@@ -160,3 +314,26 @@ def clone_test(request, pk):
     messages.success(request, f"Test '{original_test.name}' cloned successfully!")
     return redirect('webtester:detail', pk=new_test.pk)
 
+
+@login_required
+def template_list(request):
+    """List all test templates"""
+    templates = TestTemplate.objects.all().order_by('name')
+    
+    context = {
+        'templates': templates,
+    }
+    return render(request, 'webtester/template_list.html', context)
+
+@login_required
+def clone_template(request, pk):
+    """Clone a template to create a new test"""
+    template = get_object_or_404(TestTemplate, pk=pk)
+    
+    # Clone the template for the current user
+    test = template.clone_for_user(request.user)
+    
+    messages.success(request, f"Test '{test.name}' created from template successfully!")
+    
+    # Redirect to edit the new test
+    return redirect('webtester:edit', pk=test.pk)

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ title }}</h1>
+        <a href="{% url 'webtester:journey_detail' journey.pk %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Journey
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Step Form -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.step_type.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Step Type</label>
+                    <div class="mt-1">
+                        {{ form.step_type }}
+                    </div>
+                    {% if form.step_type.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.step_type.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.order.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Order</label>
+                    <div class="mt-1">
+                        {{ form.order }}
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">The order in which this step will be executed</p>
+                    {% if form.order.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.order.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.url.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">URL</label>
+                    <div class="mt-1">
+                        {{ form.url }}
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Required for 'Navigate to URL' step type</p>
+                    {% if form.url.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.url.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.selector.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Selector</label>
+                    <div class="mt-1">
+                        {{ form.selector }}
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Required for 'Click Element', 'Input Text', and 'Submit Form' step types</p>
+                    {% if form.selector.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.selector.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.value.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Value</label>
+                    <div class="mt-1">
+                        {{ form.value }}
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Required for 'Input Text' step type</p>
+                    {% if form.value.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.value.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.min_wait.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Min Wait (s)</label>
+                        <div class="mt-1">
+                            {{ form.min_wait }}
+                        </div>
+                        {% if form.min_wait.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.min_wait.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.max_wait.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max Wait (s)</label>
+                        <div class="mt-1">
+                            {{ form.max_wait }}
+                        </div>
+                        {% if form.max_wait.errors %}
+                            <p class="mt-2 text-sm text-red-600">{{ form.max_wait.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    {% if step %}Update Step{% else %}Add Step{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Show/hide fields based on step type
+    document.addEventListener('DOMContentLoaded', function() {
+        const stepTypeSelect = document.getElementById('{{ form.step_type.id_for_label }}');
+        const urlField = document.getElementById('{{ form.url.id_for_label }}').closest('div').parentNode;
+        const selectorField = document.getElementById('{{ form.selector.id_for_label }}').closest('div').parentNode;
+        const valueField = document.getElementById('{{ form.value.id_for_label }}').closest('div').parentNode;
+        
+        function updateFieldVisibility() {
+            const stepType = stepTypeSelect.value;
+            
+            // URL field is only needed for navigate step type
+            urlField.style.display = stepType === 'navigate' ? 'block' : 'none';
+            
+            // Selector field is needed for click, input, and submit step types
+            selectorField.style.display = ['click', 'input', 'submit'].includes(stepType) ? 'block' : 'none';
+            
+            // Value field is only needed for input step type
+            valueField.style.display = stepType === 'input' ? 'block' : 'none';
+        }
+        
+        // Initial update
+        updateFieldVisibility();
+        
+        // Update on change
+        stepTypeSelect.addEventListener('change', updateFieldVisibility);
+    });
+</script>
+{% endblock %}
