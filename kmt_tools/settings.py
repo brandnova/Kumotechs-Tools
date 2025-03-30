@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'shortlinks',
     'media_toolkit',
     'webanalyzer',
+    'webtester',
 ]
 
 MIDDLEWARE = [

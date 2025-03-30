@@ -53,5 +53,3 @@ def remove_bg(request):
 
 ---
 
-
-Implement site stack checker using requests to know the stack a site is built from.

@@ -27,9 +27,6 @@
                 </div>
                 <nav class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        {% if request.resolver_match.url_name != 'dashboard' and request.resolver_match.url_name != 'home' %}
-                            <a href="{% url 'dashboard' %}" class="text-white hover:text-blue-200 font-medium hidden sm:inline-block">Dashboard</a>
-                        {% endif %}
                         <span class="hidden md:inline text-sm text-white">Hello, {{ user.username }}</span>
                         <a href="{% url 'logout' %}" class="text-white hover:text-blue-200 font-medium">Logout</a>
                     {% else %}
@@ -49,7 +46,7 @@
                 <div class="mb-6">
                     <h2 class="text-gray-500 uppercase text-xs font-semibold px-3 mb-2">Tools</h2>
                     <div class="space-y-1">
-                        <a href="{% url 'dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <a href="{% url 'dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'dashboard' in request.path %}active{% endif %}">
                             <i class="fas fa-home mr-3 text-gray-500 dark:text-gray-400"></i>
                             Dashboard
                         </a>
@@ -68,6 +65,10 @@
                         <a href="{% url 'webanalyzer:dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'webanalyzer' in request.path %}active{% endif %}">
                             <i class="fas fa-globe mr-3 text-gray-500 dark:text-gray-400"></i>
                             Website Analyzer
+                        </a>
+                        <a href="{% url 'webtester:dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'webtester' in request.path %}active{% endif %}">
+                            <i class="fas fa-tachometer-alt mr-3 text-gray-500 dark:text-gray-400"></i>
+                            Website Tester
                         </a>
                     </div>
                 </div>
@@ -98,6 +99,12 @@
                     </a>
                     <a href="{% url 'media_toolkit:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'media-toolkit' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
                         <i class="fas fa-images mr-3"></i>Media Toolkit
+                    </a>
+                    <a href="{% url 'webanalyzer:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'webanalyzer' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
+                        <i class="fas fa-images mr-3"></i>Website Analyzer
+                    </a>
+                    <a href="{% url 'webtester:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'webtester' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
+                        <i class="fas fa-tachometer-alt mr-3"></i>Web Tester
                     </a>
                 </div>
             </div>
