@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="space-y-8">
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Test Details</h1>
-        <div class="flex space-x-2">
+        <div class="flex flex-wrap gap-2">
             <a href="{% url 'webtester:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                 <i class="fas fa-arrow-left mr-2"></i> Back to Tests
             </a>
@@ -27,15 +27,22 @@
     {% endif %}
 
     <!-- Test Information -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <div class="flex justify-between items-start">
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-white">
                     {{ test.name }}
+                    {% if test.is_public_template %}
+                        <span class="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                            Public Template
+                        </span>
+                    {% endif %}
                 </h2>
+                {% if test.target_url %}
                 <a href="{{ test.target_url }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-sm mt-1 inline-block">
                     {{ test.target_url }} <i class="fas fa-external-link-alt ml-1"></i>
                 </a>
+                {% endif %}
             </div>
             <div>
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
@@ -54,11 +61,35 @@
             </div>
         </div>
 
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Test Configuration -->
             <div>
                 <h3 class="text-lg font-medium text-gray-800 dark:text-white mb-4">Test Configuration</h3>
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Test Type</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                            {% if test.journey %}
+                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                    Journey Test
+                                </span>
+                            {% else %}
+                                <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                                    Simple URL Test
+                                </span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    {% if test.journey %}
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">User Journey</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                            <a href="{% url 'webtester:journey_detail' test.journey.pk %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                                {{ test.journey.name }} ({{ test.journey.steps.count }} steps)
+                            </a>
+                        </dd>
+                    </div>
+                    {% endif %}
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">HTTP Method</dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ test.http_method }}</dd>
@@ -78,6 +109,10 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Created</dt>
                         <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ test.created_at|date:"M d, Y H:i" }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Created By</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ test.created_by.username }}</dd>
                     </div>
                     {% if test.started_at %}
                     <div class="sm:col-span-1">
@@ -173,6 +208,41 @@
             </div>
         </div>
 
+        {% if test.journey %}
+        <div class="sm:col-span-2">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Primary User Journey</dt>
+            <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                <a href="{% url 'webtester:journey_detail' test.journey.pk %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                    {{ test.journey.name }} ({{ test.journey.steps.count }} steps)
+                </a>
+            </dd>
+        </div>
+        {% endif %}
+
+        {% if test.journeys.exists %}
+        <div class="sm:col-span-2">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Additional User Journeys</dt>
+            <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                <div class="space-y-2">
+                    {% for journey in test.journeys.all %}
+                    <div>
+                        <a href="{% url 'webtester:journey_detail' journey.pk %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                            {{ journey.name }} ({{ journey.steps.count }} steps)
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </dd>
+        </div>
+
+        <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Journey Probability</dt>
+            <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                {{ test.journey_probability|floatformat:1 }} ({{ test.journey_probability|floatformat:0 }}%)
+            </dd>
+        </div>
+        {% endif %}
+
         {% if test.headers or test.body %}
         <!-- Advanced Configuration -->
         <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -212,25 +282,24 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Timestamp</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Response Time</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status Code</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User Agent</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Error</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Virtual User</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Content Length</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Has Cookies</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Timestamp</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Response Time</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status Code</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User Agent</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Error</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Virtual User</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Content Length</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for result in results %}
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {{ result.timestamp|date:"H:i:s.u" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                        <td class="px-4 py-3 whitespace-nowrap text-sm">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
                                 {% if result.success %}
                                     bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100
                                 {% else %}
@@ -240,43 +309,32 @@
                                 {{ result.success|yesno:"Success,Failed" }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {% if result.response_time %}
                                 {{ result.response_time|floatformat:3 }}s
                             {% else %}
                                 N/A
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {{ result.status_code|default:"N/A" }}
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                            <span title="{{ result.user_agent }}">{{ result.user_agent|truncatechars:40 }}</span>
+                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                            <span title="{{ result.user_agent }}">{{ result.user_agent|truncatechars:20 }}</span>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                            {{ result.error|truncatechars:50 }}
+                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                            {{ result.error|truncatechars:30 }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {{ result.virtual_user_id }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {% if result.content_length %}
                                 {{ result.content_length|filesizeformat }}
                             {% else %}
                                 N/A
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {% if result.cookies %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                                    Yes
-                                </span>
-                            {% else %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
-                                    No
-                                </span>
-                            {% endif %}
-                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -285,41 +343,43 @@
     </div>
     {% endif %}
 
-    {% if test.status == 'completed' %}
+    {% if test.status == 'completed' and test.users_data %}
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden mt-8">
         <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-medium text-gray-800 dark:text-white">Virtual Users Summary</h2>
         </div>
         
+        {% with users_data=test.get_users_data_dict %}
+        {% if users_data %}
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Virtual User ID</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Requests</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Successful</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Failed</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Success Rate</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Virtual User ID</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Requests</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Successful</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Failed</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Success Rate</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {% for user_id, data in test.users_data.items %}
+                    {% for user_id, data in users_data.items %}
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {{ user_id }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {{ data.requests }}
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ data.requests|default:"0" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {{ data.successful }}
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ data.successful|default:"0" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {{ data.failed }}
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ data.failed|default:"0" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {% if data.requests > 0 %}
-                                {{ data.successful|floatformat:0 }}%
+                                {{ data.success_rate|default:"0"|floatformat:1 }}%
                             {% else %}
                                 N/A
                             {% endif %}
@@ -329,12 +389,18 @@
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="p-6 text-center text-gray-500 dark:text-gray-400">
+            No virtual user data available for this test.
+        </div>
+        {% endif %}
+        {% endwith %}
     </div>
     {% endif %}
 
     <!-- Actions -->
-    <div class="flex justify-between">
-        <div class="flex space-x-2">
+    <div class="flex flex-col sm:flex-row justify-between gap-4 mt-6">
+        <div class="flex flex-wrap gap-2">
             <a href="{% url 'webtester:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                 <i class="fas fa-arrow-left mr-2"></i> Back to Tests
             </a>
@@ -345,24 +411,22 @@
             <a href="{% url 'webtester:clone' test.pk %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                 <i class="fas fa-copy mr-2"></i> Clone Test
             </a>
+            {% if not test.is_public_template and test.created_by == request.user %}
+            <a href="{% url 'webtester:make_public_template' test.pk %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                <i class="fas fa-share-alt mr-2"></i> Make Public Template
+            </a>
+            {% endif %}
             {% endif %}
         </div>
 
-        {% comment %} <div class="flex space-x-2">
-            <a href="{% url 'webtester:edit' test.pk %}" class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
-                <i class="fas fa-edit mr-1"></i> Edit Test
-            </a>
-            <a href="{% url 'webtester:clone' test.pk %}" class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
-                <i class="fas fa-clone mr-1"></i> Clone Test
-            </a>
-        </div> {% endcomment %}
-        
+        {% if test.created_by == request.user %}
         <form method="post" action="{% url 'webtester:delete' test.pk %}" class="inline" onsubmit="return confirm('Are you sure you want to delete this test?');">
             {% csrf_token %}
             <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                 <i class="fas fa-trash mr-2"></i> Delete Test
             </button>
         </form>
+        {% endif %}
     </div>
 </div>
 
@@ -407,15 +471,9 @@
     }
     
     // Start polling when the page loads
-    document.addEventListener('DOMContent  5000);
-            });
-    }
-    
-    // Start polling when the page loads
     document.addEventListener('DOMContentLoaded', function() {
         updateTestStatus();
     });
 </script>
 {% endif %}
 {% endblock %}
-

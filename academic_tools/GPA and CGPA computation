@@ -1,0 +1,56 @@
+Here's a simplified technical explanation of GPA and CGPA computation, along with important concepts:
+
+**1. Grade Point (GP):**
+
+*   Each letter grade is assigned a numerical value called a Grade Point (GP). The handbook provides these values:
+    *   A (70-100%): 5.00
+    *   B (60-69%): 4.00
+    *   C (50-59%): 3.00
+    *   D (45-49%): 2.00
+    *   F (0-44%): 0.00
+
+**2. Credit Units/Units (CU):**
+
+*   Each course is assigned a number of Credit Units (CU), also called Units. This represents the weight of the course or the number of hours spent on it per week per semester (lecture, lab, etc.).
+
+**3. Credit Points (CP):**
+
+*   To calculate Credit Points (CP) for a course, multiply the Credit Units (CU) by the Grade Point (GP):
+
+    *   CP = CU * GP
+
+    *Example:* If a 3-unit course has a grade of 'B' (GP = 4.00), the Credit Points would be 3 * 4 = 12.
+
+**4. Grade Point Average (GPA):**
+
+*   GPA is calculated for *each semester*.
+*   Sum all the Credit Points (CP) earned in that semester. This is the Total Credit Points (TCP) for the semester.
+*   Sum all the Credit Units (CU) for all courses taken in that semester. This is the Total Number of Units (TNU) for the semester.
+*   Divide the Total Credit Points (TCP) by the Total Number of Units (TNU):
+
+    *   GPA = TCP / TNU
+
+    *Example:* If a student earned a total of 81 Credit Points (TCP) from 24 Credit Units (TNU) in a semester, the GPA would be 81 / 24 = 3.38.
+
+**5. Cumulative Grade Point Average (CGPA):**
+
+*   CGPA is a running average across *all semesters completed so far*.
+*   Sum all the Credit Points (TCP) earned in *all* semesters completed. This is the ΣTCP (summation of TCP).
+*   Sum all the Credit Units (TNU) for *all* semesters completed. This is the ΣTNU (summation of TNU).
+*   Divide the total Credit Points (ΣTCP) by the total number of units (ΣTNU):
+
+    *   CGPA = ΣTCP / ΣTNU
+
+    *Example:* If a student has a TCP of 164 from 48 TNU across two semesters, the CGPA is 164/48 = 3.42.
+
+**Key Concepts to Note:**
+
+*   **Failed Courses (F):** A grade of 'F' (GP = 0.00) significantly impacts both GPA and CGPA, as it contributes zero Credit Points despite still counting towards the total Credit Units. This is why failing courses drastically reduces your average. You must repeat failed courses.
+*   **Elective Courses:** These also contribute to GPA and CGPA, just like core courses. Ensure that you pass electives as they count.
+*   **Continuous Assessment:** Though not directly part of the GPA/CGPA calculation outlined above, note that the handbook states continuous assessment accounts for 30% of the final grade in a course, with the final examination covering the remaining 70%. Therefore, consistent performance throughout the semester through assignments and tests significantly impacts your final letter grade, which, in turn, affects your GPA/CGPA.
+*   **Decimal Places:** CGPA is usually expressed to two decimal places. This is essential for distinguishing between degree classifications, which can have very close cutoffs (e.g., 3.49 vs. 3.50 for Second Class Upper).
+*   **Probation and Withdrawal:** Maintaining a CGPA above a specified minimum (1.50 in this case) is crucial to avoid academic probation and potential withdrawal from the program.
+*   **Direct Entry and Levels:** Make a special note of any level adjustments that are specific to if you are a direct entry student.
+*   **SWEP and SIWES:** SWEP (Student Work Experience Program) is included in the calculation, but SIWES (Students Industrial Work Experience Scheme) will not be included as it is a 0 unit course.
+
+By understanding these steps and concepts, you can effectively track your academic progress and strive for your desired CGPA.

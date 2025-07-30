@@ -1,0 +1,194 @@
+<!-- cdn_tool/templates/cdn_tool/upload.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Files - CDN Tool{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="uploadTool()">
+    
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Upload Files</h1>
+            <p class="mt-1 text-gray-600 dark:text-gray-300">Upload files and get instant CDN links for your projects</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <a href="{% url 'cdn_tool:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-th-large mr-2"></i>
+                View Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="p-4 sm:p-6">
+            <form @submit.prevent="uploadFiles" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Drop Zone -->
+                <div @drop.prevent="handleDrop" 
+                     @dragover.prevent="dragActive = true" 
+                     @dragleave.prevent="dragActive = false"
+                     :class="dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'"
+                     class="border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors cursor-pointer"
+                     @click="$refs.fileInput.click()">
+                    
+                    <i class="fas fa-cloud-upload-alt text-3xl sm:text-4xl text-gray-400 dark:text-gray-500 mb-4"></i>
+                    <div class="space-y-2">
+                        <p class="text-base sm:text-lg font-medium text-gray-900 dark:text-white" x-text="dragActive ? 'Drop files here' : 'Drag files here or click to browse'"></p>
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Maximum file size: 50MB. Supported: JPG, PNG, PDF, ZIP, DOC, etc.</p>
+                    </div>
+                    
+                    <input type="file" 
+                           x-ref="fileInput"
+                           @change="selectedFiles = Array.from($event.target.files)"
+                           multiple 
+                           class="hidden" 
+                           name="files"
+                           accept="image/*,.pdf,.doc,.docx,.zip,.txt,.csv">
+                </div>
+
+                <!-- Selected Files Preview -->
+                <div x-show="selectedFiles && selectedFiles.length > 0" class="mt-4">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Selected Files:</h3>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        <template x-for="(file, index) in selectedFiles" :key="index">
+                            <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded text-sm">
+                                <span class="text-gray-700 dark:text-gray-300 truncate flex-1 mr-2" x-text="file.name"></span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap" x-text="formatFileSize(file.size)"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Additional Fields -->
+                <div class="mt-6 grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (optional)</label>
+                        <input type="text" 
+                               x-model="uploadTags"
+                               name="tags"
+                               placeholder="tag1, tag2, tag3"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (optional)</label>
+                        <textarea x-model="uploadDescription"
+                                  name="description"
+                                  rows="3"
+                                  placeholder="Brief description of the files"
+                                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"></textarea>
+                    </div>
+                </div>
+
+                <!-- Upload Button -->
+                <div class="mt-6">
+                    <button type="submit" 
+                            :disabled="!selectedFiles || selectedFiles.length === 0 || uploading"
+                            :class="uploading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
+                        <i :class="uploading ? 'fas fa-spinner fa-spin' : 'fas fa-upload'" class="mr-2"></i>
+                        <span x-text="uploading ? 'Uploading...' : 'Upload Files'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Uploads -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="p-4 sm:p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Uploads</h2>
+            <div id="recent-uploads-container">
+                {% include 'cdn_tool/partials/recent_uploads.html' %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div x-show="message" 
+         :class="messageType === 'success' ? 'bg-green-100 border-green-400 text-green-700 dark:bg-green-900 dark:border-green-600 dark:text-green-200' : 'bg-red-100 border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-200'"
+         class="border px-4 py-3 rounded relative" 
+         x-transition>
+        <span x-text="message"></span>
+        <button @click="message = ''" class="absolute top-0 bottom-0 right-0 px-4 py-3">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function uploadTool() {
+        return {
+            dragActive: false,
+            selectedFiles: [],
+            uploading: false,
+            uploadTags: '',
+            uploadDescription: '',
+            message: '',
+            messageType: 'success',
+
+            async uploadFiles() {
+                if (!this.selectedFiles || this.selectedFiles.length === 0) return;
+
+                this.uploading = true;
+                const formData = new FormData();
+                
+                for (let file of this.selectedFiles) {
+                    formData.append('files', file);
+                }
+                formData.append('tags', this.uploadTags);
+                formData.append('description', this.uploadDescription);
+                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+                try {
+                    const response = await fetch('{% url "cdn_tool:upload_files" %}', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        document.getElementById('recent-uploads-container').innerHTML = data.recent_html;
+                        this.showMessage(data.message, 'success');
+                        this.selectedFiles = [];
+                        this.uploadTags = '';
+                        this.uploadDescription = '';
+                        this.$refs.fileInput.value = '';
+                    } else {
+                        this.showMessage(data.error, 'error');
+                    }
+                } catch (error) {
+                    this.showMessage('Upload failed: ' + error.message, 'error');
+                }
+
+                this.uploading = false;
+            },
+
+            handleDrop(e) {
+                this.dragActive = false;
+                this.selectedFiles = Array.from(e.dataTransfer.files);
+            },
+
+            showMessage(text, type = 'success') {
+                this.message = text;
+                this.messageType = type;
+                setTimeout(() => this.message = '', 5000);
+            },
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        }
+    }
+</script>
+{% endblock %}
