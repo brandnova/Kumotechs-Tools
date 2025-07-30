@@ -310,7 +310,7 @@ class LoadTester:
         
         return result
     
-    def execute_journey_step(self, virtual_user, step):
+    def execute_journey_step(self, virtual_user, step, journey):
         """Execute a single step in a user journey"""
         # Wait before executing the step
         wait_time = random.uniform(step.min_wait, step.max_wait)
@@ -326,6 +326,8 @@ class LoadTester:
             'user_agent': virtual_user.user_agent,
             'cookies': dict(virtual_user.session.cookies),
             'virtual_user_id': virtual_user.user_id,
+            'journey_id': journey.id,
+            'journey_name': journey.name,
             'journey_step_id': step.id,
             'step_type': step.step_type,
             'wait_time': wait_time
@@ -336,7 +338,7 @@ class LoadTester:
             if step.step_type == 'navigate':
                 # Navigate to URL
                 url = step.url
-                step_result = virtual_user.navigate_to(url, self.test.journey.base_url)
+                step_result = virtual_user.navigate_to(url, journey.base_url)
                 result.update(step_result)
             
             elif step.step_type == 'click':
@@ -356,7 +358,7 @@ class LoadTester:
                     
                     if href_match:
                         url = href_match.group(1)
-                        step_result = virtual_user.navigate_to(url, self.test.journey.base_url)
+                        step_result = virtual_user.navigate_to(url, journey.base_url)
                         result.update(step_result)
                     else:
                         result.update({
@@ -423,28 +425,6 @@ class LoadTester:
         
         return result
     
-    def execute_journey(self, virtual_user):
-        """Execute a complete user journey"""
-        journey_results = []
-        
-        # Get all steps for the journey
-        steps = self.test.journey.steps.all().order_by('order')
-        
-        for step in steps:
-            # Check if we should stop
-            if self.stop_event.is_set():
-                break
-            
-            # Execute the step
-            result = self.execute_journey_step(virtual_user, step)
-            journey_results.append(result)
-            
-            # If the step failed, stop the journey
-            if not result['success']:
-                break
-        
-        return journey_results
-    
     def user_task(self, user_id):
         """Simulate a user making requests or executing a journey"""
         self.active_users += 1
@@ -457,20 +437,58 @@ class LoadTester:
         try:
             # Make requests until the test duration is reached
             while not self.stop_event.is_set():
-                if self.test.is_journey_test():
-                    # Execute the journey
-                    journey_results = self.execute_journey(virtual_user)
-                    self.results.extend(journey_results)
+                # Decide whether to use a journey based on probability
+                use_journey = random.random() <= self.test.journey_probability
+                
+                if use_journey and (self.test.journey or self.test.journeys.exists()):
+                    # Get a random journey
+                    journey = self.test.get_random_journey()
+                    
+                    if journey:
+                        # Execute the journey
+                        journey_results = self.execute_journey(virtual_user, journey)
+                        self.results.extend(journey_results)
+                    else:
+                        # No journey selected, make a single request to the target URL
+                        if self.test.target_url:
+                            result = self.make_request(virtual_user)
+                            self.results.append(result)
                 else:
-                    # Make a single request
-                    result = self.make_request(virtual_user)
-                    self.results.append(result)
+                    # Make a single request to the target URL
+                    if self.test.target_url:
+                        result = self.make_request(virtual_user)
+                        self.results.append(result)
+                    else:
+                        # No target URL and not using journey, sleep and continue
+                        time.sleep(1)
         
         finally:
             self.active_users -= 1
             # Clean up the virtual user
             if user_id in self.virtual_users:
                 del self.virtual_users[user_id]
+    
+    def execute_journey(self, virtual_user, journey):
+        """Execute a complete user journey"""
+        journey_results = []
+        
+        # Get all steps for the journey
+        steps = journey.steps.all().order_by('order')
+        
+        for step in steps:
+            # Check if we should stop
+            if self.stop_event.is_set():
+                break
+            
+            # Execute the step
+            result = self.execute_journey_step(virtual_user, step, journey)
+            journey_results.append(result)
+            
+            # If the step failed, stop the journey
+            if not result['success']:
+                break
+        
+        return journey_results
     
     def run_test(self):
         """Run the load test with the configured parameters"""
@@ -574,34 +592,61 @@ class LoadTester:
             else:
                 users_data[user_id]['failed'] += 1
         
-        # Group results by journey step (if applicable)
-        steps_data = {}
+        # Calculate success rate for each user
+        for user_id, data in users_data.items():
+            if data['requests'] > 0:
+                data['success_rate'] = (data['successful'] / data['requests']) * 100
+            else:
+                data['success_rate'] = 0
+        
+        # Group results by journey
+        journeys_data = {}
         for result in self.results:
-            step_id = result.get('journey_step_id')
-            if step_id and step_id not in steps_data:
-                steps_data[step_id] = {
+            journey_id = result.get('journey_id')
+            if journey_id and journey_id not in journeys_data:
+                journeys_data[journey_id] = {
+                    'name': result.get('journey_name', f'Journey {journey_id}'),
                     'requests': 0,
                     'successful': 0,
                     'failed': 0,
-                    'avg_response_time': None,
-                    'response_times': []
+                    'steps': {}
                 }
             
-            if step_id:
-                steps_data[step_id]['requests'] += 1
+            if journey_id:
+                journeys_data[journey_id]['requests'] += 1
                 if result.get('success', False):
-                    steps_data[step_id]['successful'] += 1
+                    journeys_data[journey_id]['successful'] += 1
                 else:
-                    steps_data[step_id]['failed'] += 1
+                    journeys_data[journey_id]['failed'] += 1
                 
-                if result.get('response_time') is not None:
-                    steps_data[step_id]['response_times'].append(result.get('response_time'))
+                # Group by step within journey
+                step_id = result.get('journey_step_id')
+                if step_id and step_id not in journeys_data[journey_id]['steps']:
+                    journeys_data[journey_id]['steps'][step_id] = {
+                        'step_type': result.get('step_type', 'unknown'),
+                        'requests': 0,
+                        'successful': 0,
+                        'failed': 0,
+                        'response_times': []
+                    }
+                
+                if step_id:
+                    step_data = journeys_data[journey_id]['steps'][step_id]
+                    step_data['requests'] += 1
+                    if result.get('success', False):
+                        step_data['successful'] += 1
+                    else:
+                        step_data['failed'] += 1
+                    
+                    if result.get('response_time') is not None:
+                        step_data['response_times'].append(result.get('response_time'))
         
         # Calculate average response time for each step
-        for step_id, data in steps_data.items():
-            if data['response_times']:
-                data['avg_response_time'] = statistics.mean(data['response_times'])
-                del data['response_times']  # Remove the raw data to save space
+        for journey_id, journey_data in journeys_data.items():
+            for step_id, step_data in journey_data['steps'].items():
+                if step_data['response_times']:
+                    step_data['avg_response_time'] = statistics.mean(step_data['response_times'])
+                    del step_data['response_times']  # Remove the raw data to save space
         
         return {
             'total_requests': len(self.results),
@@ -612,6 +657,6 @@ class LoadTester:
             'max_response_time': max_response_time,
             'requests_per_second': requests_per_second,
             'users_data': users_data,
-            'steps_data': steps_data,
+            'journeys_data': journeys_data,
             'detailed_results': self.results
         }

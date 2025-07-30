@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib import messages
 from django.urls import reverse
+from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
 from .models import ShortLink, QRCodeCustomization
 from .forms import ShortLinkForm, QRCodeCustomizationForm
@@ -32,11 +33,19 @@ def shortlink_dashboard(request):
     # Create QR customization form
     qr_form = QRCodeCustomizationForm()
     
+    # Calculate statistics
+    total_links = links.count()
+    total_clicks = links.aggregate(total=Sum('access_count'))['total'] or 0
+    total_qr_codes = links.filter(qr_code__isnull=False).exclude(qr_code='').count()
+    
     context = {
         'links': links,
         'form': form,
         'qr_form': qr_form,
         'base_url': base_url,
+        'total_links': total_links,
+        'total_clicks': total_clicks,
+        'total_qr_codes': total_qr_codes,
     }
     return render(request, 'shortlinks/shortener.html', context)
 

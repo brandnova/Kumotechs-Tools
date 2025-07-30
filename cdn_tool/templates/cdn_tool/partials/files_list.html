@@ -1,0 +1,123 @@
+<!-- cdn_tool/templates/cdn_tool/partials/files_list.html -->
+{% if files %}
+    <div class="space-y-4">
+        {% for file in files %}
+            <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-3 sm:p-4">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center space-x-3 min-w-0 flex-1">
+                        <i class="fas fa-{{ file.get_file_icon }} text-gray-500 dark:text-gray-400 flex-shrink-0"></i>
+                        <div class="min-w-0 flex-1">
+                            <p class="font-medium text-gray-900 dark:text-white text-sm truncate">{{ file.original_name }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ file.formatted_size }} • {{ file.upload_date|date:"M d, Y H:i" }}</p>
+                            {% if file.tags %}
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    <span class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">{{ file.tags }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 flex-shrink-0">
+                        <span class="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded">
+                            {% if "image" in file.file_type %}
+                                image
+                            {% elif "pdf" in file.file_type %}
+                                pdf
+                            {% elif "zip" in file.file_type %}
+                                archive
+                            {% elif "text" in file.file_type %}
+                                text
+                            {% else %}
+                                file
+                            {% endif %}
+                        </span>
+                        {% if file.is_image %}
+                            <button id="preview-btn-{{ file.id }}" onclick="togglePreview({{ file.id }})" class="p-1 text-blue-400 hover:text-blue-600 dark:hover:text-blue-300">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        {% endif %}
+                        <button id="details-btn-{{ file.id }}" onclick="toggleDetails({{ file.id }})" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <button onclick="deleteFile({{ file.id }})" class="p-1 text-red-400 hover:text-red-600">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Image Preview -->
+                {% if file.is_image %}
+                    <div id="preview-{{ file.id }}" class="mb-3" style="display: none;">
+                        <img src="/cdn/{{ file.hash_id }}/" 
+                             alt="{{ file.original_name }}" 
+                             class="max-w-full sm:max-w-xs max-h-48 rounded border object-cover"
+                             loading="lazy">
+                             
+                    </div>
+                {% endif %}
+                             {% comment %} onerror="this.src='/placeholder.svg?height=200&width=300&text=Image+not+found'" {% endcomment %}
+ 
+                <!-- File Links -->
+                <div id="details-{{ file.id }}" class="space-y-2" style="display: none;">
+                    <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0">CDN URL:</label>
+                        <div class="flex-1 min-w-0">
+                            <input value="{{ request.build_absolute_uri }}{{ file.cdn_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div class="flex space-x-1 flex-shrink-0">
+                            <button id="copy-cdn-{{ file.id }}" onclick="copyToClipboard('{{ request.build_absolute_uri }}{{ file.cdn_url }}', 'copy-cdn-{{ file.id }}')" 
+                                    class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0">Download:</label>
+                        <div class="flex-1 min-w-0">
+                            <input value="{{ request.build_absolute_uri }}{{ file.download_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div class="flex space-x-1 flex-shrink-0">
+                            <button id="copy-dl-{{ file.id }}" onclick="copyToClipboard('{{ request.build_absolute_uri }}{{ file.download_url }}', 'copy-dl-{{ file.id }}')" 
+                                    class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <a href="/cdn/{{ file.hash_id }}/download/" download="{{ file.original_name }}"
+                               class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if file.html_snippet %}
+                        <div class="flex flex-col sm:flex-row sm:items-start space-y-2 sm:space-y-0 sm:space-x-2">
+                            <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0 sm:pt-1">HTML:</label>
+                            <div class="flex-1 min-w-0">
+                                <textarea readonly rows="2" class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono resize-none dark:bg-gray-700 dark:text-white">{{ file.html_snippet }}</textarea>
+                            </div>
+                            <div class="flex space-x-1 flex-shrink-0">
+                                <button id="copy-html-{{ file.id }}" onclick="copyToClipboard('{{ file.html_snippet|escapejs }}', 'copy-html-{{ file.id }}')" 
+                                        class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if file.description %}
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                            <strong>Description:</strong> {{ file.description }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-8">
+        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 dark:text-gray-500 mb-4"></i>
+        <p class="text-gray-500 dark:text-gray-400 mb-4">No files found.</p>
+        <a href="{% url 'cdn_tool:upload' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+            <i class="fas fa-upload mr-2"></i>Upload Files
+        </a>
+    </div>
+{% endif %}

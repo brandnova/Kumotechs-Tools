@@ -53,3 +53,10 @@ def remove_bg(request):
 
 ---
 
+
+
+# Remove template list view and template
+
+# Text to speech using Eleven Labs (API Key: sk_c2a485da7d0c6983ac9139f990aea4b4463b853a654897f5)
+
+Implement quick stats for contact compiler

@@ -32,28 +32,45 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    """Main dashboard view showing recent activity from all tools"""
-    # Get recent links (last 3)
-    recent_links = ShortLink.objects.filter(created_by=request.user).order_by('-created_at')[:3]
-    
-    # Get recent contacts (last 3)
-    recent_contacts = Contact.objects.filter(owner=request.user).order_by('-created_at')[:3]
+    """Main dashboard view showing recent activity and counts from all tools"""
 
-    # Get recent Media (last 3)
-    recent_media = ProcessedFile.objects.filter(user=request.user).order_by('-created_at')[:3]
-    
-    # Get recent website analyses (last 3)
+    # Get recent links and total count
+    user_links = ShortLink.objects.filter(created_by=request.user)
+    recent_links = user_links.order_by('-created_at')[:3]
+    # total_links = user_links.count()
+
+    # Get recent contacts and total count
+    user_contacts = Contact.objects.filter(owner=request.user)
+    recent_contacts = user_contacts.order_by('-created_at')[:3]
+    # total_contacts = user_contacts.count()
+
+    # Get recent media and total count
+    user_media = ProcessedFile.objects.filter(user=request.user)
+    recent_media = user_media.order_by('-created_at')[:3]
+    # total_media = user_media.count()
+
+    # Get recent website analyses and total count
     try:
         from webanalyzer.models import WebsiteAnalysis
-        recent_analyses = WebsiteAnalysis.objects.filter(created_by=request.user).order_by('-created_at')[:3]
+        user_analyses = WebsiteAnalysis.objects.filter(created_by=request.user)
+        recent_analyses = user_analyses.order_by('-created_at')[:3]
+        # total_analyses = user_analyses.count()
     except:
         recent_analyses = []
-    
+        # total_analyses = 0
+
     context = {
         'recent_links': recent_links,
+        'user_links': user_links,
+
         'recent_contacts': recent_contacts,
+        'user_contacts': user_contacts,
+
         'recent_media': recent_media,
+        'user_media': user_media,
+
         'recent_analyses': recent_analyses,
+        'user_analyses': user_analyses,
     }
-    
+
     return render(request, 'core/dashboard.html', context)

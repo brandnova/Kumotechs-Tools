@@ -1,4 +1,4 @@
-import qrcode # type: ignore
+import qrcode
 from io import BytesIO
 import base64
 from django.conf import settings

@@ -1,73 +1,142 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Kumotechs Tools{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <style>
-        .sidebar-link.active {
-            background-color: rgba(59, 130, 246, 0.1);
-            border-left: 3px solid #3b82f6;
-        }
-    </style>
+    <title>{% block title %}Kumotechs - Productivity & Academic Tools{% endblock %}</title>
+    <meta name="description" content="Streamline your workflow with Kumotechs - featuring private CDN management, URL shortening, image processing, and academic tools.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.webp' %}">
+
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+    
+    <!-- Alpine.js -->
+    <script defer src="{% static 'js/alpine.min.js' %}"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
-<body class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
-    <!-- Header with modern gradient and responsive padding -->
-    <header class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <a href="{% url 'home' %}" class="flex items-center space-x-3">
-                        <i class="fas fa-tools text-2xl sm:text-3xl"></i>
-                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Kumotechs Tools</h1>
+<body class="font-sans text-neutral-800 bg-gradient-bg" x-data="{ mobileMenuOpen: false, sidebarOpen: false }">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-neutral-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
+            <div class="flex justify-between items-center h-14">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <a href="{% url 'home' %}" class="flex items-center space-x-2">
+                        <img src="{% static 'images/logo.webp' %}" alt="Kumotechs Logo" class="w-7 h-7">
+                        <span class="text-lg font-bold text-neutral-900">Kumotechs</span>
                     </a>
                 </div>
-                <nav class="flex items-center space-x-4">
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-6">
                     {% if user.is_authenticated %}
-                        <span class="hidden md:inline text-sm text-white">Hello, {{ user.username }}</span>
-                        <a href="{% url 'logout' %}" class="text-white hover:text-blue-200 font-medium">Logout</a>
+                        <span class="text-sm text-neutral-600">{{ user.username }}</span>
+                        {% if request.resolver_match.url_name == 'home' %}
+                            <!-- Dashboard button when authenticated on home page -->
+                            <a href="{% url 'dashboard' %}" class="bg-kumo-blue text-white px-4 py-2 rounded-lg hover:bg-kumo-blue-dark transition-colors duration-200 text-sm font-medium">
+                                Dashboard
+                            </a>
+                        {% else %}
+                            <!-- Logout button when on other pages -->
+                            <a href="{% url 'logout' %}" class="text-white bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500 transition-colors duration-200 text-sm font-medium">
+                                Logout
+                            </a>
+                        {% endif %}
                     {% else %}
-                        <a href="{% url 'login' %}" class="text-white hover:text-blue-200 font-medium">Login</a>
+                        <!-- Login and Get Started buttons when unauthenticated -->
+                        <a href="{% url 'login' %}" class="text-neutral-600 hover:text-kumo-blue transition-colors duration-200 text-sm">Login</a>
+                        <a href="{% url 'login' %}" class="bg-kumo-blue text-white px-4 py-2 rounded-lg hover:bg-kumo-blue-dark transition-colors duration-200 text-sm font-medium">
+                            Get Started
+                        </a>
                     {% endif %}
-                </nav>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2">
+                    <i class="fas fa-bars text-neutral-900" x-show="!mobileMenuOpen"></i>
+                    <i class="fas fa-times text-neutral-900" x-show="mobileMenuOpen"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <div x-show="mobileMenuOpen" 
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 transform scale-95"
+                x-transition:enter-end="opacity-100 transform scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 transform scale-100"
+                x-transition:leave-end="opacity-0 transform scale-95"
+                class="md:hidden bg-white border-t border-neutral-200">
+                <div class="px-4 py-3 space-y-3">
+                    {% if user.is_authenticated %}
+                        <span class="block text-neutral-600 text-sm">{{ user.username }}</span>
+                        {% if request.resolver_match.url_name == 'home' %}
+                            <!-- Dashboard button when authenticated on home page (mobile) -->
+                            <a href="{% url 'dashboard' %}" class="block w-full bg-kumo-blue text-white px-4 py-2 rounded-lg hover:bg-kumo-blue-dark transition-colors duration-200 text-sm font-medium text-center">
+                                Dashboard
+                            </a>
+                        {% else %}
+                            <!-- Logout button when on other pages (mobile) -->
+                            <a href="{% url 'logout' %}" class="block text-white bg-red-600 px-4 py-2 rounded-lg hover:bg-red-500 transition-colors duration-200 text-sm font-medium text-center">
+                                Logout
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <!-- Login and Get Started buttons when unauthenticated (mobile) -->
+                        <a href="{% url 'login' %}" class="block text-neutral-600 hover:text-kumo-blue transition-colors duration-200 text-sm">Login</a>
+                        <a href="{% url 'login' %}" class="block w-full bg-kumo-blue text-white px-4 py-2 rounded-lg hover:bg-kumo-blue-dark transition-colors duration-200 text-sm font-medium text-center">
+                            Get Started
+                        </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main content with responsive padding and sidebar -->
-    <div class="flex-grow flex">
+    <!-- Main Layout -->
+    <div class="flex min-h-screen pt-14">
         {% if user.is_authenticated and request.resolver_match.url_name != 'home' %}
-        <!-- Sidebar for navigation between tools -->
-        <div class="hidden md:block w-64 bg-white dark:bg-gray-800 shadow-md">
-            <nav class="px-3 py-4 flex flex-col h-full">
-                <div class="mb-6">
-                    <h2 class="text-gray-500 uppercase text-xs font-semibold px-3 mb-2">Tools</h2>
+        <!-- Desktop Sidebar -->
+        <div class="hidden md:block w-56 bg-white shadow-sm border-r border-neutral-200">
+            <nav class="p-3 h-full overflow-y-auto">
+                <div class="mb-4">
+                    <h2 class="text-xs font-semibold text-neutral-500 uppercase tracking-wide px-2 mb-2">Tools</h2>
                     <div class="space-y-1">
-                        <a href="{% url 'dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'dashboard' in request.path %}active{% endif %}">
-                            <i class="fas fa-home mr-3 text-gray-500 dark:text-gray-400"></i>
+                        <a href="{% url 'dashboard' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'dashboard' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-home mr-2 text-neutral-400 text-xs"></i>
                             Dashboard
                         </a>
-                        <a href="{% url 'manage_contacts' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'contacts' in request.path %}active{% endif %}">
-                            <i class="fas fa-address-book mr-3 text-gray-500 dark:text-gray-400"></i>
+                        <a href="{% url 'manage_contacts' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'contacts' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-address-book mr-2 text-neutral-400 text-xs"></i>
                             Contacts
                         </a>
-                        <a href="{% url 'shortlinks:shortener' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'shortlinks' in request.path %}active{% endif %}">
-                            <i class="fas fa-link mr-3 text-gray-500 dark:text-gray-400"></i>
+                        <a href="{% url 'shortlinks:shortener' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'shortlinks' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-link mr-2 text-neutral-400 text-xs"></i>
                             URL Shortener
                         </a>
-                        <a href="{% url 'media_toolkit:dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'media-toolkit' in request.path %}active{% endif %}">
-                            <i class="fas fa-images mr-3 text-gray-500 dark:text-gray-400"></i>
+                        <a href="{% url 'cdn_tool:dashboard' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'cdn' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-cloud mr-2 text-neutral-400 text-xs"></i>
+                            CDN Tool
+                        </a>
+                        <a href="{% url 'media_toolkit:dashboard' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'media-toolkit' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-images mr-2 text-neutral-400 text-xs"></i>
                             Media Toolkit
                         </a>
-                        <a href="{% url 'webanalyzer:dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'webanalyzer' in request.path %}active{% endif %}">
-                            <i class="fas fa-globe mr-3 text-gray-500 dark:text-gray-400"></i>
+                        <a href="{% url 'webanalyzer:dashboard' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'webanalyzer' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-globe mr-2 text-neutral-400 text-xs"></i>
                             Website Analyzer
                         </a>
-                        <a href="{% url 'webtester:dashboard' %}" class="sidebar-link group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'webtester' in request.path %}active{% endif %}">
-                            <i class="fas fa-tachometer-alt mr-3 text-gray-500 dark:text-gray-400"></i>
+                        <a href="{% url 'webtester:dashboard' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'webtester' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-tachometer-alt mr-2 text-neutral-400 text-xs"></i>
                             Website Tester
                         </a>
                     </div>
@@ -76,75 +145,124 @@
         </div>
         {% endif %}
 
-        <!-- Main content area -->
-        <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Mobile navigation menu for smaller screens (only for authenticated users) -->
-            {% if user.is_authenticated and request.resolver_match.url_name != 'home' %}
-            <div class="md:hidden mb-6 bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Tools</span>
-                    <button id="mobile-menu-button" class="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300">
-                        <i class="fas fa-bars"></i>
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+                <!-- Mobile Sidebar Toggle -->
+                {% if user.is_authenticated and request.resolver_match.url_name != 'home' %}
+                <div class="md:hidden mb-4">
+                    <button @click="sidebarOpen = !sidebarOpen" class="w-full bg-white shadow-sm rounded-lg p-3 flex items-center justify-between">
+                        <span class="text-sm font-medium text-neutral-700">Menu</span>
+                        <i class="fas fa-chevron-down text-neutral-500 text-xs transition-transform duration-200" :class="{'transform rotate-180': sidebarOpen}"></i>
                     </button>
+                    <div x-show="sidebarOpen" x-transition class="mt-2 bg-white shadow-sm rounded-lg p-2">
+                        <div class="space-y-1">
+                            <a href="{% url 'dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'dashboard' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-home mr-2 text-xs"></i>Dashboard
+                            </a>
+                            <a href="{% url 'manage_contacts' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'contacts' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-address-book mr-2 text-xs"></i>Contacts
+                            </a>
+                            <a href="{% url 'shortlinks:shortener' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'shortlinks' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-link mr-2 text-xs"></i>URL Shortener
+                            </a>
+                            <a href="{% url 'cdn_tool:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'cdn' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-cloud mr-2 text-xs"></i>CDN Tool
+                            </a>
+                            <a href="{% url 'media_toolkit:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'media-toolkit' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-images mr-2 text-xs"></i>Media Toolkit
+                            </a>
+                            <a href="{% url 'webanalyzer:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'webanalyzer' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-globe mr-2 text-xs"></i>Website Analyzer
+                            </a>
+                            <a href="{% url 'webtester:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'webtester' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-tachometer-alt mr-2 text-xs"></i>Web Tester
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <div id="mobile-menu" class="hidden mt-3 space-y-2">
-                    <a href="{% url 'dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-50 dark:bg-gray-700{% endif %}">
-                        <i class="fas fa-home mr-3"></i>Dashboard
-                    </a>
-                    <a href="{% url 'manage_contacts' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'contacts' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
-                        <i class="fas fa-address-book mr-3"></i>Contacts
-                    </a>
-                    <a href="{% url 'shortlinks:shortener' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'shortlinks' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
-                        <i class="fas fa-link mr-3"></i>URL Shortener
-                    </a>
-                    <a href="{% url 'media_toolkit:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'media-toolkit' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
-                        <i class="fas fa-images mr-3"></i>Media Toolkit
-                    </a>
-                    <a href="{% url 'webanalyzer:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'webanalyzer' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
-                        <i class="fas fa-images mr-3"></i>Website Analyzer
-                    </a>
-                    <a href="{% url 'webtester:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 {% if 'webtester' in request.path %}bg-blue-50 dark:bg-gray-700{% endif %}">
-                        <i class="fas fa-tachometer-alt mr-3"></i>Web Tester
-                    </a>
-                </div>
+                {% endif %}
+
+                <!-- Export Button for Contacts -->
+                {% if 'contacts' in request.path %}
+                    <div class="flex items-center justify-end mb-4">
+                        <a href="{% url 'export_vcf' %}" class="bg-kumo-blue text-white px-4 py-2 rounded-lg shadow-sm text-sm font-medium hover:bg-kumo-blue-dark transition-colors inline-flex items-center">
+                            <i class="fas fa-download mr-2 text-xs"></i>Export VCF
+                        </a>
+                    </div>
+                {% endif %}
+
+                <!-- Page Content -->
+                {% block content %}
+                {% endblock %}
             </div>
-            {% endif %}
-
-            {% if 'contacts' in request.path %}
-                <div class="flex items-center justify-end mb-6">
-                    <a href="{% url 'export_vcf' %}" class="inline-flex items-center text-white px-4 py-2 bg-blue-700 hover:bg-blue-800 rounded-lg shadow transition-colors">
-                        <i class="fas fa-download mr-2"></i>Export VCF
-                    </a>
-                </div>
-            {% endif %}
-
-            {% block content %}
-            {% endblock %}
         </main>
     </div>
 
-    <!-- Footer with modern design -->
-    <footer class="bg-gray-800 text-gray-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                <p class="text-sm">&copy; 2025 Kumotechs. All rights reserved.</p>
+    <!-- Footer -->
+    <footer class="bg-neutral-900 text-white py-10 px-4 sm:px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Brand -->
+                <div class="md:col-span-2">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <img src="{% static 'images/logo.webp' %}" alt="Kumotechs Logo" class="w-6 h-6">
+                        <span class="text-lg font-bold">Kumotechs</span>
+                    </div>
+                    {% if user.is_authenticated and request.resolver_match.url_name == 'home' %}
+                    <p class="text-neutral-300 mb-3 text-sm max-w-md">
+                        Empowering productivity through intelligent workflow tools. 
+                        Built for creators, developers, and academics who demand excellence.
+                    </p>
+                    <div class="flex space-x-3">
+                        <a href="#" class="text-neutral-400 hover:text-kumo-blue transition-colors duration-200">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-neutral-400 hover:text-kumo-blue transition-colors duration-200">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="text-neutral-400 hover:text-kumo-blue transition-colors duration-200">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if user.is_authenticated and request.resolver_match.url_name == 'home' %}
+                <!-- Tools -->
+                <div>
+                    <h4 class="font-semibold mb-3 text-sm">Tools</h4>
+                    <ul class="space-y-2 text-neutral-300 text-sm">
+                        <li><a href="{% url 'manage_contacts' %}" class="hover:text-kumo-blue transition-colors duration-200">Contact Manager</a></li>
+                        <li><a href="{% url 'shortlinks:shortener' %}" class="hover:text-kumo-blue transition-colors duration-200">URL Shortener</a></li>
+                        <li><a href="{% url 'cdn_tool:dashboard' %}" class="hover:text-kumo-blue transition-colors duration-200">CDN Tool</a></li>
+                        <li><a href="{% url 'media_toolkit:dashboard' %}" class="hover:text-kumo-blue transition-colors duration-200">Media Toolkit</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Academic -->
+                <div>
+                    <h4 class="font-semibold mb-3 text-sm">Academic</h4>
+                    <ul class="space-y-2 text-neutral-300 text-sm">
+                        <li><a href="{% url 'academic_tools:gpa_calculator' %}" class="hover:text-kumo-blue transition-colors duration-200">GPA Calculator</a></li>
+                        <li><a href="{% url 'academic_tools:gpa_calculator' %}" class="hover:text-kumo-blue transition-colors duration-200">CGPA Calculator</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="border-t border-neutral-800 mt-6 pt-6 flex flex-col sm:flex-row justify-between items-center">
+                <p class="text-neutral-400 text-xs">
+                    © {% now "Y" %} Kumotechs. All rights reserved.
+                </p>
+                <div class="flex space-x-4 mt-3 sm:mt-0">
+                    <a href="#" class="text-neutral-400 hover:text-kumo-blue text-xs transition-colors duration-200">Privacy Policy</a>
+                    <a href="#" class="text-neutral-400 hover:text-kumo-blue text-xs transition-colors duration-200">Terms of Service</a>
+                    <a href="#" class="text-neutral-400 hover:text-kumo-blue text-xs transition-colors duration-200">Support</a>
+                </div>
             </div>
         </div>
     </footer>
-
-    <script>
-        // Mobile menu toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            
-            if (mobileMenuButton && mobileMenu) {
-                mobileMenuButton.addEventListener('click', function() {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-        });
-    </script>
 
     {% block extra_js %}{% endblock %}
 </body>

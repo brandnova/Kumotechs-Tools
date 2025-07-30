@@ -1,147 +1,246 @@
 {% extends "base.html" %}
 
-{% block title %}URL Shortener{% endblock %}
+{% block title %}URL Shortener - Kumotechs Tools{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">URL Shortener</h1>
+<div class="space-y-6" x-data="{ showStats: false }">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">URL Shortener</h1>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Create and manage shortened URLs with QR codes</p>
+        </div>
+        <button @click="showStats = !showStats" class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/30">
+            <i class="fas fa-chart-bar mr-2"></i>
+            <span x-text="showStats ? 'Hide Stats' : 'Show Stats'"></span>
+        </button>
     </div>
 
+    <!-- Quick Stats (Collapsible) -->
+    <div x-show="showStats" x-transition class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+            <div class="flex items-center">
+                <div class="p-2 bg-white/20 rounded-lg">
+                    <i class="fas fa-link text-lg"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-blue-100">Total Links</p>
+                    <p class="text-2xl font-bold">{{ total_links }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
+            <div class="flex items-center">
+                <div class="p-2 bg-white/20 rounded-lg">
+                    <i class="fas fa-mouse-pointer text-lg"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-green-100">Total Clicks</p>
+                    <p class="text-2xl font-bold">{{ total_clicks }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
+            <div class="flex items-center">
+                <div class="p-2 bg-white/20 rounded-lg">
+                    <i class="fas fa-qrcode text-lg"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-purple-100">QR Codes</p>
+                    <p class="text-2xl font-bold">{{ total_qr_codes }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages -->
     {% if messages %}
         {% for message in messages %}
-            <div class="p-4 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
-                {{ message }}
+            <div class="p-3 rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800{% else %}bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800{% endif %}">
+                <div class="flex items-center">
+                    <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                    {{ message }}
+                </div>
             </div>
         {% endfor %}
     {% endif %}
 
     <!-- Create new short URL form -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-800 dark:text-white mb-4">Create New Short URL</h2>
-        <form method="post" class="space-y-4">
-            {% csrf_token %}
-            
-            <div>
-                <label for="{{ form.original_url.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Original URL</label>
-                <div class="mt-1">
-                    {{ form.original_url }}
+    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-plus text-blue-600 dark:text-blue-400 text-sm"></i>
                 </div>
-                {% if form.original_url.errors %}
-                    <p class="mt-2 text-sm text-red-600">{{ form.original_url.errors|join:", " }}</p>
-                {% endif %}
-            </div>
-            
-            <div>
-                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Link Name (Optional)</label>
-                <div class="mt-1">
-                    {{ form.name }}
+                Create New Short URL
+            </h2>
+        </div>
+        <div class="p-5">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label for="{{ form.original_url.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-globe mr-1 text-blue-500"></i>
+                            Original URL
+                        </label>
+                        <div class="relative">
+                            {{ form.original_url }}
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-link text-gray-400"></i>
+                            </div>
+                        </div>
+                        {% if form.original_url.errors %}
+                            <p class="mt-1 text-sm text-red-600 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                {{ form.original_url.errors|join:", " }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-tag mr-1 text-green-500"></i>
+                            Link Name <span class="text-gray-400">(Optional)</span>
+                        </label>
+                        {{ form.name }}
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">A friendly name to identify this link</p>
+                        {% if form.name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.name.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-hashtag mr-1 text-purple-500"></i>
+                            Custom Slug <span class="text-gray-400">(Optional)</span>
+                        </label>
+                        {{ form.slug }}
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Leave blank for auto-generation</p>
+                        {% if form.slug.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.slug.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
                 </div>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">A friendly name to identify this link</p>
-                {% if form.name.errors %}
-                    <p class="mt-2 text-sm text-red-600">{{ form.name.errors|join:", " }}</p>
-                {% endif %}
-            </div>
-            
-            <div>
-                <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Custom Slug (Optional)</label>
-                <div class="mt-1">
-                    {{ form.slug }}
+                
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <i class="fas fa-compress-arrows-alt mr-2"></i>
+                        Create Short URL
+                    </button>
                 </div>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Leave blank for auto-generation</p>
-                {% if form.slug.errors %}
-                    <p class="mt-2 text-sm text-red-600">{{ form.slug.errors|join:", " }}</p>
-                {% endif %}
-            </div>
-            
-            <div>
-                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Create Short URL
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
     <!-- URL list -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-medium text-gray-800 dark:text-white">Your Shortened URLs</h2>
+    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-list text-blue-600 dark:text-blue-400 text-sm"></i>
+                </div>
+                Your Shortened URLs
+                <span class="ml-2 px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full">
+                    {{ links|length }}
+                </span>
+            </h2>
         </div>
         
         {% if links %}
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700/50">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name/Short URL</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Original URL</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">QR Code</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Clicks</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-tag mr-1"></i>Name/Short URL
+                        </th>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-globe mr-1"></i>Original URL
+                        </th>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-qrcode mr-1"></i>QR Code
+                        </th>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-mouse-pointer mr-1"></i>Clicks
+                        </th>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-calendar mr-1"></i>Created
+                        </th>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <i class="fas fa-cog mr-1"></i>Actions
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for link in links %}
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex flex-col">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-5 py-4 whitespace-nowrap">
+                            <div class="flex flex-col space-y-1">
                                 {% if link.name %}
-                                <div class="font-semibold text-gray-800 dark:text-white mb-1">
-                                    {{ link.name }}
-                                    <button onclick="editLinkName('{{ link.pk }}', '{{ link.name }}')" class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                                        <i class="fas fa-edit"></i>
+                                <div class="flex items-center">
+                                    <span class="font-medium text-gray-900 dark:text-white text-sm">{{ link.name }}</span>
+                                    <button onclick="editLinkName('{{ link.pk }}', '{{ link.name }}')" class="ml-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                        <i class="fas fa-edit text-xs"></i>
                                     </button>
                                 </div>
                                 {% endif %}
-                                <a href="{{ base_url }}{{ link.slug }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                                    {{ base_url }}{{ link.slug }}
-                                </a>
-                                <button onclick="copyToClipboard('{{ base_url }}{{ link.slug }}')" class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                                    <i class="fas fa-copy"></i>
-                                </button>
+                                <div class="flex items-center space-x-2">
+                                    <a href="{{ base_url }}{{ link.slug }}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-mono">
+                                        {{ base_url }}{{ link.slug }}
+                                    </a>
+                                    <button onclick="copyToClipboard('{{ base_url }}{{ link.slug }}')" class="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Copy to clipboard">
+                                        <i class="fas fa-copy text-xs"></i>
+                                    </button>
+                                </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            <div class="max-w-xs overflow-hidden text-ellipsis">
-                                <a href="{{ link.original_url }}" target="_blank" class="hover:underline">
+                        <td class="px-5 py-4">
+                            <div class="max-w-xs">
+                                <a href="{{ link.original_url }}" target="_blank" class="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-sm truncate block">
                                     {{ link.original_url|truncatechars:50 }}
                                 </a>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            <div class="flex items-center space-x-2">
-                                <div id="qr-container-{{ link.slug }}" class="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                        <td class="px-5 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-3">
+                                <div id="qr-container-{{ link.slug }}" class="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded border">
                                     {% if link.qr_code %}
-                                        <img src="{{ link.qr_code.url }}" alt="QR Code" class="w-10 h-10">
+                                        <img src="{{ link.qr_code.url }}" alt="QR Code" class="w-10 h-10 rounded">
                                     {% else %}
-                                        <i class="fas fa-qrcode text-gray-400"></i>
+                                        <i class="fas fa-qrcode text-gray-400 text-sm"></i>
                                     {% endif %}
                                 </div>
                                 <div class="flex space-x-1">
-                                    <button onclick="generateQRCode('{{ link.slug }}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Generate QR Code">
-                                        <i class="fas fa-sync-alt"></i>
+                                    <button onclick="generateQRCode('{{ link.slug }}')" class="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors" title="Generate QR Code">
+                                        <i class="fas fa-sync-alt text-xs"></i>
                                     </button>
-                                    <button onclick="openQRModal('{{ link.slug }}')" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Customize QR Code">
-                                        <i class="fas fa-cog"></i>
+                                    <button onclick="openQRModal('{{ link.slug }}')" class="p-1 text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors" title="Customize QR Code">
+                                        <i class="fas fa-palette text-xs"></i>
                                     </button>
-                                    <a href="{% url 'shortlinks:download_qr' link.slug %}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Download QR Code">
-                                        <i class="fas fa-download"></i>
+                                    <a href="{% url 'shortlinks:download_qr' link.slug %}" class="p-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors" title="Download QR Code">
+                                        <i class="fas fa-download text-xs"></i>
                                     </a>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {{ link.access_count }}
+                        <td class="px-5 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">{{ link.access_count }}</span>
+                                {% if link.access_count > 0 %}
+                                    <div class="ml-2 w-2 h-2 bg-green-400 rounded-full"></div>
+                                {% endif %}
+                            </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             {{ link.created_at|date:"M d, Y" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <td class="px-5 py-4 whitespace-nowrap">
                             <form method="post" action="{% url 'shortlinks:delete' link.pk %}" class="inline" onsubmit="return confirm('Are you sure you want to delete this URL?');">
                                 {% csrf_token %}
-                                <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                    <i class="fas fa-trash"></i>
+                                <button type="submit" class="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="Delete URL">
+                                    <i class="fas fa-trash text-xs"></i>
                                 </button>
                             </form>
                         </td>
@@ -151,112 +250,140 @@
             </table>
         </div>
         {% else %}
-        <div class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-            <p>You haven't created any short URLs yet.</p>
+        <div class="px-5 py-8 text-center">
+            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-link text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-1">No URLs yet</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Create your first shortened URL to get started.</p>
         </div>
         {% endif %}
     </div>
 </div>
 
 <!-- QR Code Customization Modal -->
-<div id="qr-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Customize QR Code</h3>
-            <button onclick="closeQRModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+<div id="qr-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-palette text-purple-600 dark:text-purple-400 text-sm"></i>
+                </div>
+                Customize QR Code
+            </h3>
+            <button onclick="closeQRModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         
-        <form id="qr-form" method="post" enctype="multipart/form-data" class="space-y-4">
-            {% csrf_token %}
-            <input type="hidden" id="qr-slug" name="slug" value="">
-            
-            <div>
-                <label for="id_color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">QR Code Color</label>
-                <div class="mt-1">
-                    {{ qr_form.color }}
+        <div class="p-5">
+            <form id="qr-form" method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" id="qr-slug" name="slug" value="">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="id_color" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-palette mr-1 text-blue-500"></i>
+                            QR Code Color
+                        </label>
+                        {{ qr_form.color }}
+                    </div>
+                    
+                    <div>
+                        <label for="id_bg_color" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-fill mr-1 text-green-500"></i>
+                            Background Color
+                        </label>
+                        {{ qr_form.bg_color }}
+                    </div>
                 </div>
-            </div>
-            
-            <div>
-                <label for="id_bg_color" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Background Color</label>
-                <div class="mt-1">
-                    {{ qr_form.bg_color }}
-                </div>
-            </div>
-            
-            <div>
-                <label for="id_text" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Text (Optional)</label>
-                <div class="mt-1">
+                
+                <div>
+                    <label for="id_text" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-font mr-1 text-purple-500"></i>
+                        Text <span class="text-gray-400">(Optional)</span>
+                    </label>
                     {{ qr_form.text }}
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Add text below the QR code (max 50 characters)</p>
                 </div>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Add text below the QR code (max 50 characters)</p>
-            </div>
-            
-            <div>
-                <label for="id_logo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Logo (Optional)</label>
-                <div class="mt-1">
+                
+                <div>
+                    <label for="id_logo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-image mr-1 text-orange-500"></i>
+                        Logo <span class="text-gray-400">(Optional)</span>
+                    </label>
                     {{ qr_form.logo }}
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Upload a logo to place in the center of the QR code</p>
                 </div>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Upload a logo to place in the center of the QR code</p>
-            </div>
+                
+                <div class="flex items-start space-x-3">
+                    <div class="flex items-center h-5 mt-1">
+                        {{ qr_form.convert_logo_bw }}
+                    </div>
+                    <div class="text-sm">
+                        <label for="id_convert_logo_bw" class="font-medium text-gray-700 dark:text-gray-300">Convert logo to black and white</label>
+                        <p class="text-gray-500 dark:text-gray-400">Makes the logo match the QR code style</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" onclick="previewQRCode()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-eye mr-2"></i>
+                        Preview
+                    </button>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
             
-            <div class="flex items-center">
-                <div class="flex items-center h-5">
-                    {{ qr_form.convert_logo_bw }}
+            <div id="qr-preview" class="mt-6 flex justify-center">
+                <div class="w-48 h-48 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
+                    <i class="fas fa-qrcode text-gray-400 text-4xl"></i>
                 </div>
-                <div class="ml-3 text-sm">
-                    <label for="id_convert_logo_bw" class="font-medium text-gray-700 dark:text-gray-300">Convert logo to black and white</label>
-                    <p class="text-gray-500 dark:text-gray-400">Makes the logo match the QR code style</p>
-                </div>
-            </div>
-            
-            <div class="flex justify-between">
-                <button type="button" onclick="previewQRCode()" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
-                    Preview
-                </button>
-                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Save
-                </button>
-            </div>
-        </form>
-        
-        <div id="qr-preview" class="mt-4 flex justify-center">
-            <div class="w-48 h-48 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <i class="fas fa-qrcode text-gray-400 text-4xl"></i>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Link Name Edit Modal -->
-<div id="name-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Edit Link Name</h3>
-            <button onclick="closeNameModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+<div id="name-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4">
+        <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-edit text-green-600 dark:text-green-400 text-sm"></i>
+                </div>
+                Edit Link Name
+            </h3>
+            <button onclick="closeNameModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         
-        <form id="name-form" method="post" class="space-y-4">
-            {% csrf_token %}
-            <input type="hidden" id="link-id" name="link_id" value="">
-            
-            <div>
-                <label for="link-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Link Name</label>
-                <div class="mt-1">
-                    <input type="text" id="link-name" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        <div class="p-5">
+            <form id="name-form" method="post" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" id="link-id" name="link_id" value="">
+                
+                <div>
+                    <label for="link-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-tag mr-1 text-blue-500"></i>
+                        Link Name
+                    </label>
+                    <input type="text" id="link-name" name="name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors">
                 </div>
-            </div>
-            
-            <div class="flex justify-end">
-                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Save
-                </button>
-            </div>
-        </form>
+                
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -267,8 +394,8 @@
         navigator.clipboard.writeText(text).then(function() {
             // Show a temporary success message
             const notification = document.createElement('div');
-            notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg';
-            notification.textContent = 'Copied to clipboard!';
+            notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center';
+            notification.innerHTML = '<i class="fas fa-check mr-2"></i>Copied to clipboard!';
             document.body.appendChild(notification);
             
             // Remove the notification after 2 seconds
@@ -306,7 +433,7 @@
     // Generate QR Code function
     function generateQRCode(slug) {
         const container = document.getElementById(`qr-container-${slug}`);
-        container.innerHTML = '<div class="animate-spin"><i class="fas fa-spinner"></i></div>';
+        container.innerHTML = '<div class="animate-spin"><i class="fas fa-spinner text-blue-500"></i></div>';
         
         // Get CSRF token
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -326,7 +453,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.qr_code) {
-                container.innerHTML = `<img src="${data.qr_code}" alt="QR Code" class="w-10 h-10">`;
+                container.innerHTML = `<img src="${data.qr_code}" alt="QR Code" class="w-10 h-10 rounded">`;
             } else {
                 container.innerHTML = '<i class="fas fa-exclamation-circle text-red-500"></i>';
             }
@@ -346,7 +473,7 @@
         const convertBW = document.getElementById('id_convert_logo_bw').checked;
         const preview = document.getElementById('qr-preview');
         
-        preview.innerHTML = '<div class="w-48 h-48 flex items-center justify-center"><div class="animate-spin"><i class="fas fa-spinner"></i></div></div>';
+        preview.innerHTML = '<div class="w-48 h-48 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600"><div class="animate-spin"><i class="fas fa-spinner text-blue-500"></i></div></div>';
         
         // Get CSRF token
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -368,14 +495,14 @@
         .then(response => response.json())
         .then(data => {
             if (data.qr_code) {
-                preview.innerHTML = `<img src="${data.qr_code}" alt="QR Code Preview" class="max-w-full max-h-48">`;
+                preview.innerHTML = `<img src="${data.qr_code}" alt="QR Code Preview" class="max-w-full max-h-48 rounded-lg border">`;
             } else {
-                preview.innerHTML = '<div class="w-48 h-48 flex items-center justify-center"><i class="fas fa-exclamation-circle text-red-500 text-4xl"></i></div>';
+                preview.innerHTML = '<div class="w-48 h-48 rounded-lg flex items-center justify-center border-2 border-dashed border-red-300"><i class="fas fa-exclamation-circle text-red-500 text-4xl"></i></div>';
             }
         })
         .catch(error => {
             console.error('Error generating QR code preview:', error);
-            preview.innerHTML = '<div class="w-48 h-48 flex items-center justify-center"><i class="fas fa-exclamation-circle text-red-500 text-4xl"></i></div>';
+            preview.innerHTML = '<div class="w-48 h-48 rounded-lg flex items-center justify-center border-2 border-dashed border-red-300"><i class="fas fa-exclamation-circle text-red-500 text-4xl"></i></div>';
         });
     }
     
@@ -402,4 +529,3 @@
     });
 </script>
 {% endblock %}
-

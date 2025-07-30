@@ -4,11 +4,11 @@
 
 {% block content %}
 <div class="space-y-8">
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Web Performance Tester</h1>
-        <div class="flex space-x-2">
-            <a href="{% url 'webtester:template_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
-                <i class="fas fa-copy mr-2"></i> Templates
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'webtester:public_templates' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                <i class="fas fa-book mr-2"></i> Public Templates <span class="ml-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">{{ public_templates_count }}</span>
             </a>
             <a href="{% url 'webtester:journey_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                 <i class="fas fa-route mr-2"></i> User Journeys
@@ -27,43 +27,115 @@
         {% endfor %}
     {% endif %}
 
+    <!-- Assigned Tests -->
+    {% if assigned_tests %}
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-800 dark:text-white">Tests Assigned to You</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">Target</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">Assigned By</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">Assigned At</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for test in assigned_tests %}
+                    <tr>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white">
+                            {{ test.name }}
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
+                            {% if test.is_journey_test %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                    Journey Test
+                                </span>
+                            {% else %}
+                                <a href="{{ test.target_url }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                                    {{ test.target_url|truncatechars:20 }}
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if test.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100
+                                {% elif test.status == 'running' %}bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100
+                                {% elif test.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100
+                                {% elif test.status == 'failed' %}bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100
+                                {% endif %}">
+                                {{ test.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                            {{ test.assignments.get.assigned_by.username }}
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
+                            {{ test.assignments.get.assigned_at|date:"M d, Y H:i" }}
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'webtester:detail' test.pk %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'webtester:run' test.pk %}" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300" title="Run Test">
+                                    <i class="fas fa-play"></i>
+                                </a>
+                                <a href="{% url 'webtester:clone' test.pk %}" class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300" title="Clone Test">
+                                    <i class="fas fa-clone"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Running Tests -->
     {% if running_tests %}
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-medium text-gray-800 dark:text-white">Running Tests</h2>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Target URL</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Users</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Started</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">Target URL</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">Users</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">Started</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for test in running_tests %}
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white">
                             {{ test.name }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
                             <a href="{{ test.target_url }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                                {{ test.target_url|truncatechars:40 }}
+                                {{ test.target_url|truncatechars:20 }}
                             </a>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
                             {{ test.num_users }} ({{ test.spawn_rate }}/s)
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
                             {{ test.started_at|date:"M d, Y H:i:s" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                             <a href="{% url 'webtester:detail' test.pk %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                                <i class="fas fa-eye mr-1"></i> View
+                                <i class="fas fa-eye"></i>
                             </a>
                         </td>
                     </tr>
@@ -76,7 +148,7 @@
 
     <!-- Recent Tests -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-lg font-medium text-gray-800 dark:text-white">Recent Tests</h2>
         </div>
         
@@ -85,27 +157,27 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Target URL</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Requests</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Avg. Response</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Completed</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">Target URL</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">Requests</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">Avg. Response</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden xl:table-cell">Completed</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for test in recent_tests %}
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white">
                             {{ test.name }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
                             <a href="{{ test.target_url }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                                {{ test.target_url|truncatechars:40 }}
+                                {{ test.target_url|truncatechars:20 }}
                             </a>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                                 {% if test.status == 'completed' %}
                                     bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100
@@ -118,20 +190,20 @@
                                 {{ test.status|title }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
                             {{ test.total_requests }} ({{ test.requests_per_second|floatformat:1 }}/s)
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
                             {% if test.avg_response_time %}
                                 {{ test.avg_response_time|floatformat:2 }}s
                             {% else %}
                                 N/A
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden xl:table-cell">
                             {{ test.completed_at|date:"M d, Y H:i:s" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                             <div class="flex space-x-2">
                                 <a href="{% url 'webtester:detail' test.pk %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" title="View Details">
                                     <i class="fas fa-eye"></i>
@@ -153,16 +225,16 @@
             </table>
         </div>
         {% else %}
-        <div class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+        <div class="px-4 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400">
             <p>You haven't run any tests yet.</p>
         </div>
         {% endif %}
     </div>
 
-    <!-- All Tests -->
+    <!-- Your Tests -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-medium text-gray-800 dark:text-white">All Tests</h2>
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-800 dark:text-white">Your Tests</h2>
         </div>
         
         {% if tests %}
@@ -170,59 +242,65 @@
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Target URL</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Configuration</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">Target</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">Created</th>
+                        <th scope="col" class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for test in tests %}
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white">
                             {{ test.name }}
+                            {% if test.is_public_template %}
+                                <span class="ml-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                                    Public
+                                </span>
+                            {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            <a href="{{ test.target_url }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                                {{ test.target_url|truncatechars:40 }}
-                            </a>
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                            {% if test.is_journey_test %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                    Journey Test
+                                </span>
+                            {% else %}
+                                <a href="{{ test.target_url }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                                    {{ test.target_url|truncatechars:20 }}
+                                </a>
+                            {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {{ test.num_users }} users, {{ test.spawn_rate }}/s, {{ test.duration }}s
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                {% if test.status == 'completed' %}
-                                    bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100
-                                {% elif test.status == 'running' %}
-                                    bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100
-                                {% elif test.status == 'failed' %}
-                                    bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100
-                                {% else %}
-                                    bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100
-                                {% endif %}
-                            ">
-                                {{ test.status|title }}
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if test.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100
+                                {% elif test.status == 'running' %}bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100
+                                {% elif test.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100
+                                {% elif test.status == 'failed' %}bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100
+                                {% endif %}">
+                                {{ test.get_status_display }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
                             {{ test.created_at|date:"M d, Y H:i" }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <div class="flex space-x-2">
+                        <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="flex flex-wrap gap-2">
                                 <a href="{% url 'webtester:detail' test.pk %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" title="View Details">
                                     <i class="fas fa-eye"></i>
-                                </a>
-                                {% if test.status != 'running' %}
-                                <a href="{% url 'webtester:edit' test.pk %}" class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300" title="Edit Test">
-                                    <i class="fas fa-edit"></i>
                                 </a>
                                 <a href="{% url 'webtester:run' test.pk %}" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300" title="Run Test">
                                     <i class="fas fa-play"></i>
                                 </a>
-                                {% endif %}
+                                <a href="{% url 'webtester:edit' test.pk %}" class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300" title="Edit Test">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'webtester:clone' test.pk %}" class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 hidden sm:inline" title="Clone Test">
+                                    <i class="fas fa-clone"></i>
+                                </a>
+                                <a href="{% url 'webtester:make_public_template' test.pk %}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 hidden sm:inline" title="Make Public Template">
+                                    <i class="fas fa-share-alt"></i>
+                                </a>
                                 <form method="post" action="{% url 'webtester:delete' test.pk %}" class="inline" onsubmit="return confirm('Are you sure you want to delete this test?');">
                                     {% csrf_token %}
                                     <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete Test">
@@ -237,11 +315,14 @@
             </table>
         </div>
         {% else %}
-        <div class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+        <div class="px-4 sm:px-6 py-4 text-center text-gray-500 dark:text-gray-400">
             <p>You haven't created any tests yet.</p>
-            <div class="mt-4">
+            <div class="mt-4 flex flex-wrap justify-center gap-2">
                 <a href="{% url 'webtester:create' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <i class="fas fa-plus mr-2"></i> Create Your First Test
+                </a>
+                <a href="{% url 'webtester:public_templates' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                    <i class="fas fa-book mr-2"></i> Browse Templates
                 </a>
             </div>
         </div>
@@ -249,4 +330,3 @@
     </div>
 </div>
 {% endblock %}
-

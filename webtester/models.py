@@ -1,35 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 import json
+import random
 from django.utils import timezone
 from django.urls import reverse
-
-
-class JourneyStep(models.Model):
-    """Model to define a step in a user journey"""
-    STEP_TYPES = [
-        ('navigate', 'Navigate to URL'),
-        ('click', 'Click Element'),
-        ('input', 'Input Text'),
-        ('wait', 'Wait'),
-        ('submit', 'Submit Form'),
-    ]
-    
-    journey = models.ForeignKey('UserJourney', on_delete=models.CASCADE, related_name='steps')
-    step_type = models.CharField(max_length=20, choices=STEP_TYPES)
-    order = models.PositiveIntegerField(help_text="Order of execution within the journey")
-    url = models.URLField(max_length=2000, blank=True, null=True, help_text="URL to navigate to (for navigate step type)")
-    selector = models.CharField(max_length=255, blank=True, null=True, help_text="CSS selector for the element (for click, input, submit step types)")
-    value = models.TextField(blank=True, null=True, help_text="Value to input (for input step type)")
-    min_wait = models.FloatField(default=1.0, help_text="Minimum wait time in seconds before executing this step")
-    max_wait = models.FloatField(default=3.0, help_text="Maximum wait time in seconds before executing this step")
-    
-    class Meta:
-        ordering = ['journey', 'order']
-        unique_together = ['journey', 'order']
-    
-    def __str__(self):
-        return f"{self.get_step_type_display()} (Step {self.order})"
 
 class UserJourney(models.Model):
     """Model to define a user journey (sequence of steps)"""
@@ -51,6 +25,32 @@ class UserJourney(models.Model):
     def get_absolute_url(self):
         return reverse('webtester:journey_detail', kwargs={'pk': self.pk})
 
+class JourneyStep(models.Model):
+    """Model to define a step in a user journey"""
+    STEP_TYPES = [
+        ('navigate', 'Navigate to URL'),
+        ('click', 'Click Element'),
+        ('input', 'Input Text'),
+        ('wait', 'Wait'),
+        ('submit', 'Submit Form'),
+    ]
+    
+    journey = models.ForeignKey(UserJourney, on_delete=models.CASCADE, related_name='steps')
+    step_type = models.CharField(max_length=20, choices=STEP_TYPES)
+    order = models.PositiveIntegerField(help_text="Order of execution within the journey")
+    url = models.CharField(max_length=2000, blank=True, null=True, help_text="Path relative to base URL (e.g., /login)")
+    selector = models.CharField(max_length=255, blank=True, null=True, help_text="CSS selector for the element (for click, input, submit step types)")
+    value = models.TextField(blank=True, null=True, help_text="Value to input (for input step type)")
+    min_wait = models.FloatField(default=1.0, help_text="Minimum wait time in seconds before executing this step")
+    max_wait = models.FloatField(default=3.0, help_text="Maximum wait time in seconds before executing this step")
+    
+    class Meta:
+        ordering = ['journey', 'order']
+        unique_together = ['journey', 'order']
+    
+    def __str__(self):
+        return f"{self.get_step_type_display()} (Step {self.order})"
+
 class LoadTest(models.Model):
     """Model to store load test configurations and results"""
     # Test configuration
@@ -68,6 +68,14 @@ class LoadTest(models.Model):
     ], help_text="HTTP method for simple tests (not used for journey tests)")
     headers = models.TextField(blank=True, null=True, help_text="HTTP headers in JSON format")
     body = models.TextField(blank=True, null=True, help_text="Request body for POST/PUT requests (not used for journey tests)")
+
+    # Public template fields
+    is_public_template = models.BooleanField(default=False, help_text="Make this test available as a public template for other users")
+    template_name = models.CharField(max_length=100, blank=True, null=True, help_text="Name to display in the public template library")
+    template_description = models.TextField(blank=True, null=True, help_text="Description of what this template does")
+
+    journeys = models.ManyToManyField(UserJourney, blank=True, related_name='load_tests_multi', help_text="User journeys to execute (overrides target_url)")
+    journey_probability = models.FloatField(default=0.7, help_text="Probability (0-1) that a virtual user will use a journey instead of just hitting the target URL")
     
     # Test metadata
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='load_tests')
@@ -107,7 +115,24 @@ class LoadTest(models.Model):
     
     def is_journey_test(self):
         """Check if this is a journey test"""
-        return self.journey is not None
+        return self.journeys.exists()
+    
+    def get_random_journey(self):
+        """Get a random journey from the assigned journeys"""
+        if not self.is_journey_test():
+            return None
+        
+        # Decide whether to use a journey based on probability
+        if random.random() > self.journey_probability:
+            return None
+        
+        # Get all journeys
+        journeys = list(self.journeys.all())
+        if not journeys:
+            return None
+        
+        # Return a random journey
+        return random.choice(journeys)
     
     def __str__(self):
         return f"{self.name} - {self.target_url}"
@@ -334,3 +359,17 @@ class TestTemplate(models.Model):
         
         return test
 
+class TestAssignment(models.Model):
+    """Model to assign tests to specific users"""
+    test = models.ForeignKey(LoadTest, on_delete=models.CASCADE, related_name='assignments')
+    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assigned_tests')
+    assigned_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='test_assignments')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, null=True, help_text="Notes for the assigned user")
+    
+    class Meta:
+        unique_together = ['test', 'assigned_to']
+        ordering = ['-assigned_at']
+    
+    def __str__(self):
+        return f"{self.test.name} assigned to {self.assigned_to.username}"

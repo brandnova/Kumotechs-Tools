@@ -6,7 +6,7 @@ class LoadTestForm(forms.ModelForm):
     """Form for creating and editing load tests"""
     class Meta:
         model = LoadTest
-        fields = ['name', 'target_url', 'journey', 'num_users', 'spawn_rate', 'duration', 'http_method', 'headers', 'body']
+        fields = ['name', 'target_url', 'journey', 'journeys', 'journey_probability', 'num_users', 'spawn_rate', 'duration', 'http_method', 'headers', 'body']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
@@ -17,35 +17,42 @@ class LoadTestForm(forms.ModelForm):
                 'placeholder': 'https://example.com'
             }),
             'journey': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+            }),
+            'journeys': forms.SelectMultiple(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                'size': '5',  # Show 5 options at once
+            }),
+            'journey_probability': forms.NumberInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                'min': '0',
+                'max': '1',
+                'step': '0.1',
             }),
             'num_users': forms.NumberInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
                 'min': '1',
-                'max': '1000'
             }),
             'spawn_rate': forms.NumberInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
                 'min': '1',
-                'max': '100'
             }),
             'duration': forms.NumberInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                'min': '5',
-                'max': '3600'
+                'min': '1',
             }),
             'http_method': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
             }),
             'headers': forms.Textarea(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                'placeholder': '{"Content-Type": "application/json", "Authorization": "Bearer token"}',
-                'rows': '3'
+                'rows': '3',
+                'placeholder': 'Enter headers in JSON format'
             }),
             'body': forms.Textarea(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                'placeholder': '{"key": "value"}',
-                'rows': '3'
+                'rows': '3',
+                'placeholder': 'Enter request body'
             }),
         }
     
@@ -73,17 +80,14 @@ class LoadTestForm(forms.ModelForm):
         return body
     
     def clean(self):
-        """Validate that either target_url or journey is provided, but not both"""
+        """Validate that either target_url or journey/journeys is provided"""
         cleaned_data = super().clean()
         target_url = cleaned_data.get('target_url')
         journey = cleaned_data.get('journey')
+        journeys = cleaned_data.get('journeys')
         
-        if not target_url and not journey:
-            raise forms.ValidationError("Either Target URL or User Journey must be provided")
-        
-        if target_url and journey:
-            self.add_error('target_url', "Cannot specify both Target URL and User Journey")
-            self.add_error('journey', "Cannot specify both Target URL and User Journey")
+        if not target_url and not journey and not journeys:
+            raise forms.ValidationError("Either Target URL or at least one User Journey must be provided")
         
         return cleaned_data
 
@@ -115,15 +119,15 @@ class JourneyStepForm(forms.ModelForm):
         fields = ['step_type', 'order', 'url', 'selector', 'value', 'min_wait', 'max_wait']
         widgets = {
             'step_type': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
             }),
             'order': forms.NumberInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                'min': '1'
+                'min': '1',
             }),
-            'url': forms.URLInput(attrs={
+            'url': forms.TextInput(attrs={  
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                'placeholder': '/path/to/page'
+                'placeholder': '/path/to/page (relative to base URL)'
             }),
             'selector': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
@@ -131,7 +135,7 @@ class JourneyStepForm(forms.ModelForm):
             }),
             'value': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
-                'placeholder': 'Text to input'
+                'placeholder': 'Value to input'
             }),
             'min_wait': forms.NumberInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
@@ -163,3 +167,23 @@ class JourneyStepForm(forms.ModelForm):
             self.add_error('value', "Value is required for input step type")
         
         return cleaned_data
+    
+class PublicTemplateForm(forms.ModelForm):
+    """Form for making a test a public template"""
+    class Meta:
+        model = LoadTest
+        fields = ['is_public_template', 'template_name', 'template_description']
+        widgets = {
+            'is_public_template': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600'
+            }),
+            'template_name': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                'placeholder': 'Template name (leave blank to use test name)'
+            }),
+            'template_description': forms.Textarea(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                'placeholder': 'Describe what this template does and how to use it',
+                'rows': '3'
+            }),
+        }
