@@ -4,14 +4,17 @@
 
 {% block content %}
 <div class="space-y-8">
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
         <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Journey Details</h1>
-        <div class="flex space-x-2">
+        <div class="flex flex-wrap gap-2">
             <a href="{% url 'webtester:journey_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Journeys
+                <i class="fas fa-arrow-left mr-2"></i> Back
             </a>
-            <a href="{% url 'webtester:create' %}?journey={{ journey.pk }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                <i class="fas fa-play mr-2"></i> Create Test with this Journey
+            <a href="{% url 'webtester:create' %}?journey={{ journey.pk }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-2"></i> Create Test
+            </a>
+            <a href="{% url 'webtester:add_journey_to_test' journey.pk %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                <i class="fas fa-link mr-2"></i> Add to Test
             </a>
         </div>
     </div>
@@ -25,13 +28,13 @@
     {% endif %}
 
     <!-- Journey Information -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <div class="flex justify-between items-start">
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start space-y-4 sm:space-y-0">
             <div>
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-white">
                     {{ journey.name }}
                 </h2>
-                <a href="{{ journey.base_url }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-sm mt-1 inline-block">
+                <a href="{{ journey.base_url }}" target="_blank" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-sm mt-1 inline-block break-all">
                     {{ journey.base_url }} <i class="fas fa-external-link-alt ml-1"></i>
                 </a>
                 {% if journey.description %}
@@ -40,7 +43,7 @@
                 </p>
                 {% endif %}
             </div>
-            <div>
+            <div class="self-start">
                 <a href="{% url 'webtester:edit_journey' journey.pk %}" class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                     <i class="fas fa-edit mr-1"></i> Edit Journey
                 </a>
@@ -48,7 +51,7 @@
         </div>
 
         <div class="mt-6">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
                 <h3 class="text-lg font-medium text-gray-800 dark:text-white">Journey Steps</h3>
                 <a href="{% url 'webtester:add_journey_step' journey.pk %}" class="inline-flex items-center px-3 py-1 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <i class="fas fa-plus mr-1"></i> Add Step
@@ -56,59 +59,61 @@
             </div>
             
             {% if steps %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Order</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">URL / Selector</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Value</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Wait Time</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {% for step in steps %}
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ step.order }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ step.get_step_type_display }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {% if step.url %}
-                                    {{ step.url }}
-                                {% elif step.selector %}
-                                    {{ step.selector }}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ step.value|default:"-" }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ step.min_wait }} - {{ step.max_wait }}s
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <div class="flex space-x-2">
-                                    <a href="{% url 'webtester:edit_journey_step' journey.pk step.pk %}" class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300" title="Edit Step">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form method="post" action="{% url 'webtester:delete_journey_step' journey.pk step.pk %}" class="inline" onsubmit="return confirm('Are you sure you want to delete this step?');">
-                                        {% csrf_token %}
-                                        <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete Step">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="overflow-x-auto -mx-4 sm:mx-0">
+                <div class="inline-block min-w-full align-middle">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Order</th>
+                                <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                                <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">URL / Selector</th>
+                                <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">Value</th>
+                                <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">Wait</th>
+                                <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {% for step in steps %}
+                            <tr>
+                                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {{ step.order }}
+                                </td>
+                                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {{ step.get_step_type_display }}
+                                </td>
+                                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
+                                    {% if step.url %}
+                                        <span class="truncate max-w-xs inline-block">{{ step.url }}</span>
+                                    {% elif step.selector %}
+                                        <span class="truncate max-w-xs inline-block">{{ step.selector }}</span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                                    <span class="truncate max-w-xs inline-block">{{ step.value|default:"-" }}</span>
+                                </td>
+                                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                                    {{ step.min_wait }} - {{ step.max_wait }}s
+                                </td>
+                                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm">
+                                    <div class="flex space-x-2">
+                                        <a href="{% url 'webtester:edit_journey_step' journey.pk step.pk %}" class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300" title="Edit Step">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="post" action="{% url 'webtester:delete_journey_step' journey.pk step.pk %}" class="inline" onsubmit="return confirm('Are you sure you want to delete this step?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete Step">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
             {% else %}
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md text-center">
@@ -124,8 +129,8 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex justify-between">
-        <div class="flex space-x-2">
+    <div class="flex sm:flex-row justify-between sm:space-y-0">
+        <div>
             <a href="{% url 'webtester:journey_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                 <i class="fas fa-arrow-left mr-2"></i> Back to Journeys
             </a>

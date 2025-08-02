@@ -12,6 +12,7 @@ urlpatterns = [
     path('test/<int:pk>/delete/', views.delete_test, name='delete'),
     path('test/<int:pk>/status/', views.test_status, name='status'),
     path('test/<int:pk>/clone/', views.clone_test, name='clone'),
+    path('test/<int:pk>/make-public/', views.make_public_template, name='make_public_template'),
     
     # User Journey URLs
     path('journeys/', views.journey_list, name='journey_list'),
@@ -20,10 +21,11 @@ urlpatterns = [
     path('journeys/<int:pk>/edit/', views.edit_journey, name='edit_journey'),
     path('journeys/<int:pk>/delete/', views.delete_journey, name='delete_journey'),
     path('journeys/<int:journey_pk>/steps/add/', views.add_journey_step, name='add_journey_step'),
+    path('journeys/<int:journey_pk>/add-to-test/', views.add_journey_to_test, name='add_journey_to_test'),
     path('journeys/<int:journey_pk>/steps/<int:step_pk>/edit/', views.edit_journey_step, name='edit_journey_step'),
     path('journeys/<int:journey_pk>/steps/<int:step_pk>/delete/', views.delete_journey_step, name='delete_journey_step'),
 
-    # Journey Templates
-    path('templates/', views.template_list, name='template_list'),
+    # Public Templates
+    path('templates/', views.public_templates, name='public_templates'),
     path('templates/<int:pk>/clone/', views.clone_template, name='clone_template'),
 ]

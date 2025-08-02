@@ -1,0 +1,64 @@
+<!-- cdn_tool/templates/cdn_tool/partials/recent_uploads.html -->
+{% if recent_files %}
+    <div class="space-y-4">
+        {% for file in recent_files %}
+            <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-3 sm:p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3 min-w-0 flex-1">
+                        <i class="fas fa-{{ file.get_file_icon }} text-gray-500 dark:text-gray-400 flex-shrink-0"></i>
+                        <div class="min-w-0 flex-1">
+                            <p class="font-medium text-gray-900 dark:text-white text-sm truncate">{{ file.original_name }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ file.formatted_size }} • {{ file.upload_date|date:"M d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded flex-shrink-0">
+                        {% if "image" in file.file_type %}
+                            image
+                        {% elif "pdf" in file.file_type %}
+                            pdf
+                        {% elif "zip" in file.file_type %}
+                            archive
+                        {% elif "text" in file.file_type %}
+                            text
+                        {% else %}
+                            file
+                        {% endif %}
+                    </span>
+                </div>
+
+                <!-- Links -->
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-16 flex-shrink-0">CDN URL:</label>
+                        <div class="flex-1 min-w-0">
+                            <input value="{{ request.build_absolute_uri }}{{ file.cdn_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <button onclick="copyToClipboard('{{ request.build_absolute_uri }}{{ file.cdn_url }}', 'recent-cdn-{{ file.id }}')" 
+                                id="recent-cdn-{{ file.id }}"
+                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 flex-shrink-0">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    
+                    {% if file.html_snippet %}
+                        <div class="flex items-center space-x-2">
+                            <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-16 flex-shrink-0">HTML:</label>
+                            <div class="flex-1 min-w-0">
+                                <input value="{{ file.html_snippet }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <button onclick="copyToClipboard('{{ file.html_snippet|escapejs }}', 'recent-html-{{ file.id }}')" 
+                                    id="recent-html-{{ file.id }}"
+                                    class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 flex-shrink-0">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-4">
+        <p class="text-gray-500 dark:text-gray-400 text-sm">No recent uploads yet.</p>
+    </div>
+{% endif %}

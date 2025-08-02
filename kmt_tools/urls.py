@@ -9,12 +9,13 @@ urlpatterns = [
     path('', include('core.urls')),
     path('contacts/', include('contacts.urls')),
     path('shortlinks/', include('shortlinks.urls')),
+    path('s/<slug:slug>/', redirect_to_original, name='shortlink_redirect'),
     path('media-toolkit/', include('media_toolkit.urls', namespace='media_toolkit')),
     path('webanalyzer/', include('webanalyzer.urls', namespace='webanalyzer')),
     path('webtester/', include('webtester.urls', namespace='webtester')),
+    path('academic_tools/', include('academic_tools.urls', namespace='academic_tools')),
+    path('cdn/', include('cdn_tool.urls')),
     
-    # Redirect path for shortened URLs
-    path('s/<slug:slug>/', redirect_to_original, name='shortlink_redirect'),
 ]
 
 # Add this at the end of the file to serve media files during development

@@ -1,107 +1,161 @@
-<!-- single_page_contacts.html -->
 {% extends "base.html" %}
 
-{% block title %}Manage Contacts{% endblock %}
+{% block title %}Manage Contacts - Kumotechs Tools{% endblock %}
 
 {% block content %}
-<div class="bg-white shadow-lg rounded-lg overflow-hidden">
-    <div class="p-6 border-b border-gray-200">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 class="text-2xl font-semibold text-gray-800">
-                <i class="fas fa-users mr-2"></i>Contacts
-            </h2>
-            <button id="add-contact-button" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-colors">
-                <i class="fas fa-plus mr-2"></i>Add Contact
-            </button>
-        </div>
-
-        <!-- Search and Filter Section -->
-        <div class="mb-6">
-            <div class="relative">
-                <input type="text" id="search-contacts" 
-                       placeholder="Search contacts..." 
-                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+<div x-data="{ showFilters: false }" class="space-y-4">
+    <!-- Header Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="p-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Contacts</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Manage your contact directory</p>
+                    </div>
+                </div>
+                <button id="add-contact-button" 
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-all duration-200 hover:shadow-md">
+                    <i class="fas fa-plus mr-2 text-xs"></i>
+                    Add Contact
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- Contacts Table -->
-        <div class="table-container overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 responsive-table">
-                <thead class="bg-gray-50">
+    <!-- Search and Stats Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="p-4">
+            {% comment %} <!-- Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">{{ contacts.count }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Total Contacts</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ contacts.verified|length }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Verified</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-orange-600">0</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Recent</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">0</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">Organizations</div>
+                </div>
+            </div> {% endcomment %}
+
+            <!-- Search Bar -->
+            <div class="relative">
+                <input type="text" id="search-contacts"
+                       placeholder="Search contacts by name, email, or organization..."
+                       class="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contacts Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Name
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Contact
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             Email
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             Phone
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             Organization
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Verified
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Status
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             Actions
                         </th>
                     </tr>
                 </thead>
-                <tbody id="contact-list" class="bg-white divide-y divide-gray-200">
+                <tbody id="contact-list" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {% for contact in contacts %}
-                    <tr data-contact-id="{{ contact.id }}" class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-user text-gray-500"></i>
+                    <tr data-contact-id="{{ contact.id }}" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-900 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-blue-600 dark:text-blue-400 text-sm"></i>
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
                                         {% if contact.prefix %}{{ contact.prefix }} {% endif %}{{ contact.name }}
                                     </div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-500">
+                        <td class="px-4 py-3">
+                            <div class="text-sm text-gray-600 dark:text-gray-300">
                                 {% if contact.email %}
-                                    <a href="mailto:{{ contact.email }}" class="hover:text-blue-600 transition-colors">
+                                    <a href="mailto:{{ contact.email }}" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                         {{ contact.email }}
                                     </a>
                                 {% else %}
-                                    -
+                                    <span class="text-gray-400">—</span>
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-500">
-                                <a href="tel:{{ contact.phone }}" class="hover:text-blue-600 transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="text-sm text-gray-600 dark:text-gray-300">
+                                <a href="tel:{{ contact.phone }}" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                     {{ contact.phone }}
                                 </a>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-500">{{ contact.organization|default:"-" }}</div>
+                        <td class="px-4 py-3">
+                            <div class="text-sm text-gray-600 dark:text-gray-300">
+                                {{ contact.organization|default:"—" }}
+                            </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-4 py-3">
                             <button onclick="toggleVerification({{ contact.id }}, {{ contact.verified|yesno:'true,false' }})"
-                                    class="px-2 py-1 rounded-full text-xs font-medium {% if contact.verified %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %} transition-colors">
+                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 hover:shadow-sm {% if contact.verified %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
                                 <i class="fas {% if contact.verified %}fa-check-circle{% else %}fa-times-circle{% endif %} mr-1"></i>
                                 {{ contact.verified|yesno:"Verified,Unverified" }}
                             </button>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex space-x-3">
-                                <button onclick="editContact({{ contact.id }})" 
-                                        class="text-indigo-600 hover:text-indigo-900 transition-colors">
-                                    <i class="fas fa-edit mr-1"></i>Edit
+                        <td class="px-4 py-3">
+                            <div class="flex items-center space-x-2">
+                                <button onclick="editContact({{ contact.id }})"
+                                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-all duration-200">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Edit
                                 </button>
-                                <button onclick="deleteContact({{ contact.id }})" 
-                                        class="text-red-600 hover:text-red-900 transition-colors">
-                                    <i class="fas fa-trash-alt mr-1"></i>Delete
+                                <button onclick="deleteContact({{ contact.id }})"
+                                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-all duration-200">
+                                    <i class="fas fa-trash-alt mr-1"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center">
+                            <div class="flex flex-col items-center space-y-3">
+                                <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-users text-gray-400 text-xl"></i>
+                                </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">No contacts found</div>
+                                <button onclick="document.getElementById('add-contact-button').click()" 
+                                        class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    Add your first contact
                                 </button>
                             </div>
                         </td>
@@ -114,53 +168,64 @@
 </div>
 
 <!-- Contact Form Modal -->
-<div id="contact-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 modal-overlay overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-lg bg-white">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-900" id="modal-title">Add New Contact</h3>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500 transition-colors">
-                <i class="fas fa-times"></i>
+<div id="contact-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white" id="modal-title">Add New Contact</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <form id="contact-form" class="space-y-4">
+
+        <!-- Modal Body -->
+        <form id="contact-form" class="p-4 space-y-4">
             {% csrf_token %}
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Prefix</label>
-                <select name="prefix" class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">None</option>
-                    <option value="Mr.">Mr.</option>
-                    <option value="Mrs.">Mrs.</option>
-                    <option value="Ms.">Ms.</option>
-                    <option value="Dr.">Dr.</option>
-                </select>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prefix</label>
+                    <select name="prefix" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                        <option value="">None</option>
+                        <option value="Mr.">Mr.</option>
+                        <option value="Mrs.">Mrs.</option>
+                        <option value="Ms.">Ms.</option>
+                        <option value="Dr.">Dr.</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
+                    <input type="text" name="name" required
+                           class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                </div>
             </div>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700">Name</label>
-                <input type="text" name="name" required
-                       class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                 <input type="email" name="email"
-                       class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
             </div>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700">Phone</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone *</label>
                 <input type="tel" name="phone" required
-                       class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
             </div>
+
             <div>
-                <label class="block text-sm font-medium text-gray-700">Organization</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organization</label>
                 <input type="text" name="organization"
-                       class="mt-1 p-3 block w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                       class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
             </div>
-            <div class="flex justify-end space-x-3 mt-6">
+
+            <!-- Modal Footer -->
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button type="button" onclick="closeModal()"
-                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+                        class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all duration-200">
                     Cancel
                 </button>
                 <button type="submit"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md">
                     Save Contact
                 </button>
             </div>
@@ -182,56 +247,56 @@
     // Utility function to create a single contact row
     function createContactRow(contact) {
         return `
-            <tr data-contact-id="${contact.id}" class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user text-gray-500"></i>
+            <tr data-contact-id="${contact.id}" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+                <td class="px-4 py-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-900 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-blue-600 dark:text-blue-400 text-sm"></i>
                         </div>
-                        <div class="ml-4">
-                            <div class="text-sm font-medium text-gray-900">
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
                                 ${contact.prefix ? contact.prefix + ' ' : ''}${contact.name}
                             </div>
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-500">
+                <td class="px-4 py-3">
+                    <div class="text-sm text-gray-600 dark:text-gray-300">
                         ${contact.email ? 
-                            `<a href="mailto:${contact.email}" class="hover:text-blue-600 transition-colors">
+                            `<a href="mailto:${contact.email}" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                 ${contact.email}
                             </a>` : 
-                            '-'
+                            '<span class="text-gray-400">—</span>'
                         }
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-500">
-                        <a href="tel:${contact.phone}" class="hover:text-blue-600 transition-colors">
+                <td class="px-4 py-3">
+                    <div class="text-sm text-gray-600 dark:text-gray-300">
+                        <a href="tel:${contact.phone}" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                             ${contact.phone}
                         </a>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-500">${contact.organization || '-'}</div>
+                <td class="px-4 py-3">
+                    <div class="text-sm text-gray-600 dark:text-gray-300">${contact.organization || '—'}</div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-3">
                     <button onclick="toggleVerification(${contact.id}, ${contact.verified})"
-                            class="px-2 py-1 rounded-full text-xs font-medium ${
-                                contact.verified ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                            } transition-colors">
+                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 hover:shadow-sm ${
+                                contact.verified ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                            }">
                         <i class="fas ${contact.verified ? 'fa-check-circle' : 'fa-times-circle'} mr-1"></i>
                         ${contact.verified ? 'Verified' : 'Unverified'}
                     </button>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex space-x-3">
-                        <button onclick="editContact(${contact.id})" 
-                                class="text-indigo-600 hover:text-indigo-900 transition-colors">
+                <td class="px-4 py-3">
+                    <div class="flex items-center space-x-2">
+                        <button onclick="editContact(${contact.id})"
+                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded transition-all duration-200">
                             <i class="fas fa-edit mr-1"></i>Edit
                         </button>
-                        <button onclick="deleteContact(${contact.id})" 
-                                class="text-red-600 hover:text-red-900 transition-colors">
+                        <button onclick="deleteContact(${contact.id})"
+                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-all duration-200">
                             <i class="fas fa-trash-alt mr-1"></i>Delete
                         </button>
                     </div>
@@ -264,14 +329,14 @@
         existingNotifications.forEach(notification => notification.remove());
 
         const notification = document.createElement('div');
-        notification.className = `notification fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white ${
+        notification.className = `notification fixed bottom-4 right-4 px-4 py-3 rounded-lg text-white ${
             type === 'success' ? 'bg-green-600' : 'bg-red-600'
-        } shadow-lg notification-slide-in z-50`;
+        } shadow-lg z-50 transform transition-all duration-300`;
         
         notification.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
-                <span>${message}</span>
+            <div class="flex items-center space-x-2">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span class="text-sm font-medium">${message}</span>
             </div>
         `;
         
@@ -279,7 +344,8 @@
         
         setTimeout(() => {
             notification.style.opacity = '0';
-            setTimeout(() => notification.remove(), 500);
+            notification.style.transform = 'translateY(100%)';
+            setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
 
@@ -302,9 +368,9 @@
         // Populate form
         form.elements.prefix.value = prefix;
         form.elements.name.value = name;
-        form.elements.email.value = emailCell === '-' ? '' : emailCell;
+        form.elements.email.value = emailCell === '—' ? '' : emailCell;
         form.elements.phone.value = phoneCell;
-        form.elements.organization.value = orgCell === '-' ? '' : orgCell;
+        form.elements.organization.value = orgCell === '—' ? '' : orgCell;
         
         editingContactId = contactId;
         showModal('Edit Contact');
@@ -326,21 +392,21 @@
                     update_verification_only: true
                 })
             });
-    
+
             if (!response.ok) throw new Error('Failed to update verification status');
-    
+
             const updatedContact = await response.json();
             
             // Update the button attributes and appearance
             button.onclick = () => toggleVerification(contactId, newStatus);
             
             if (updatedContact.verified) {
-                button.classList.remove('bg-gray-100', 'text-gray-800');
-                button.classList.add('bg-green-100', 'text-green-800');
+                button.classList.remove('bg-gray-100', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-300');
+                button.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200');
                 button.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Verified';
             } else {
-                button.classList.remove('bg-green-100', 'text-green-800');
-                button.classList.add('bg-gray-100', 'text-gray-800');
+                button.classList.remove('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200');
+                button.classList.add('bg-gray-100', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-300');
                 button.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Unverified';
             }
             
@@ -350,7 +416,6 @@
         }
     }
     
-
     async function deleteContact(contactId) {
         if (!confirm('Are you sure you want to delete this contact?')) return;
         
@@ -365,6 +430,7 @@
             if (response.ok) {
                 const row = document.querySelector(`tr[data-contact-id="${contactId}"]`);
                 row.style.opacity = '0';
+                row.style.transform = 'translateX(-100%)';
                 setTimeout(() => row.remove(), 300);
                 showNotification('Contact deleted successfully', 'success');
             } else {

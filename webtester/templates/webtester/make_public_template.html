@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Make Public Template{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Make Public Template</h1>
+        <a href="{% url 'webtester:detail' test.pk %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Test
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="p-4 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Template Form -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+            Share "{{ test.name }}" as a Public Template
+        </h2>
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        {{ form.is_public_template }}
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="{{ form.is_public_template.id_for_label }}" class="font-medium text-gray-700 dark:text-gray-300">Make this test available as a public template</label>
+                        <p class="text-gray-500 dark:text-gray-400">Other users will be able to clone this test configuration.</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="{{ form.template_name.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Template Name</label>
+                    <div class="mt-1">
+                        {{ form.template_name }}
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Leave blank to use the test name</p>
+                    {% if form.template_name.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.template_name.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.template_description.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Template Description</label>
+                    <div class="mt-1">
+                        {{ form.template_description }}
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Describe what this template does and how to use it</p>
+                    {% if form.template_description.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.template_description.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Save Template Settings
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
