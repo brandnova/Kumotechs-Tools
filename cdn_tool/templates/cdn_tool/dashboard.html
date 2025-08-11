@@ -147,7 +147,7 @@
                                 
                                 <!-- Quick Copy All Button -->
                                 <div class="mb-3">
-                                    <button onclick="quickCopyAll({{ file.id }}, '{{ request.build_absolute_uri }}{{ file.cdn_url }}', '{{ request.build_absolute_uri }}{{ file.download_url }}', {% if file.is_image %}'{{ file.html_snippet|escapejs }}'{% else %}null{% endif %}, {% if file.is_image %}'![{{ file.original_name }}]({{ request.build_absolute_uri }}{{ file.cdn_url }})'{% else %}'[{{ file.original_name }}]({{ request.build_absolute_uri }}{{ file.download_url }})'{% endif %})" 
+                                    <button onclick="quickCopyAll({{ file.id }}, '{{ file.full_cdn_url }}', '{{ file.full_download_url }}', {% if file.is_image %}'{{ file.html_snippet_with_request }}'{% else %}null{% endif %}, {% if file.is_image %}'![{{ file.original_name }}]({{ file.full_cdn_url }})'{% else %}'[{{ file.original_name }}]({{ file.full_download_url }})'{% endif %})" 
                                             id="quick-copy-{{ file.id }}"
                                             class="w-full flex items-center justify-center px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
                                         <i class="fas fa-copy mr-2"></i>Copy All Links
@@ -157,10 +157,10 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                                     <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0">CDN URL:</label>
                                     <div class="flex-1 min-w-0">
-                                        <input value="{{ request.build_absolute_uri }}{{ file.cdn_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
+                                        <input value="{{ file.full_cdn_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
                                     </div>
                                     <div class="flex space-x-1 flex-shrink-0">
-                                        <button onclick="copyToClipboard('{{ request.build_absolute_uri }}{{ file.cdn_url }}', 'copy-cdn-{{ file.id }}')" 
+                                        <button onclick="copyToClipboard('{{ file.full_cdn_url }}', 'copy-cdn-{{ file.id }}')" 
                                                 id="copy-cdn-{{ file.id }}"
                                                 class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <i class="fas fa-copy"></i>
@@ -171,10 +171,10 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                                     <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0">Download:</label>
                                     <div class="flex-1 min-w-0">
-                                        <input value="{{ request.build_absolute_uri }}{{ file.download_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
+                                        <input value="{{ file.full_download_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
                                     </div>
                                     <div class="flex space-x-1 flex-shrink-0">
-                                        <button onclick="copyToClipboard('{{ request.build_absolute_uri }}{{ file.download_url }}', 'copy-dl-{{ file.id }}')" 
+                                        <button onclick="copyToClipboard('{{ file.full_download_url }}', 'copy-dl-{{ file.id }}')" 
                                                 id="copy-dl-{{ file.id }}"
                                                 class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <i class="fas fa-copy"></i>
@@ -190,10 +190,10 @@
                                     <div class="flex flex-col sm:flex-row sm:items-start space-y-2 sm:space-y-0 sm:space-x-2">
                                         <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0 sm:pt-1">HTML:</label>
                                         <div class="flex-1 min-w-0">
-                                            <textarea readonly rows="2" class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono resize-none dark:bg-gray-700 dark:text-white">{{ file.html_snippet }}</textarea>
+                                            <textarea readonly rows="2" class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono resize-none dark:bg-gray-700 dark:text-white">{{ file.html_snippet_with_request }}</textarea>
                                         </div>
                                         <div class="flex space-x-1 flex-shrink-0">
-                                            <button onclick="copyToClipboard('{{ file.html_snippet|escapejs }}', 'copy-html-{{ file.id }}')" 
+                                            <button onclick="copyToClipboard('{{ file.html_snippet_with_request }}', 'copy-html-{{ file.id }}')" 
                                                     id="copy-html-{{ file.id }}"
                                                     class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
                                                 <i class="fas fa-copy"></i>
@@ -206,10 +206,10 @@
                                 <div class="flex flex-col sm:flex-row sm:items-start space-y-2 sm:space-y-0 sm:space-x-2">
                                     <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0 sm:pt-1">Markdown:</label>
                                     <div class="flex-1 min-w-0">
-                                        <textarea readonly rows="1" class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono resize-none dark:bg-gray-700 dark:text-white">{% if file.is_image %}![{{ file.original_name }}]({{ request.build_absolute_uri }}{{ file.cdn_url }}){% else %}[{{ file.original_name }}]({{ request.build_absolute_uri }}{{ file.download_url }}){% endif %}</textarea>
+                                        <textarea readonly rows="1" class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono resize-none dark:bg-gray-700 dark:text-white">{% if file.is_image %}![{{ file.original_name }}]({{ file.full_cdn_url }}){% else %}[{{ file.original_name }}]({{ file.full_download_url }}){% endif %}</textarea>
                                     </div>
                                     <div class="flex space-x-1 flex-shrink-0">
-                                        <button onclick="copyToClipboard('{% if file.is_image %}![{{ file.original_name }}]({{ request.build_absolute_uri }}{{ file.cdn_url }}){% else %}[{{ file.original_name }}]({{ request.build_absolute_uri }}{{ file.download_url }}){% endif %}', 'copy-md-{{ file.id }}')" 
+                                        <button onclick="copyToClipboard('{% if file.is_image %}![{{ file.original_name }}]({{ file.full_cdn_url }}){% else %}[{{ file.original_name }}]({{ file.full_download_url }}){% endif %}', 'copy-md-{{ file.id }}')" 
                                                 id="copy-md-{{ file.id }}"
                                                 class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <i class="fas fa-copy"></i>

@@ -20,6 +20,13 @@ def upload_page(request):
     form = FileUploadForm()
     recent_files = CDNFile.objects.all()[:5]
     
+    # Add full URLs to each file object
+    for file in recent_files:
+        file.full_cdn_url = file.get_full_cdn_url(request)
+        file.full_download_url = file.get_full_download_url(request)
+        if file.is_image:
+            file.html_snippet_with_request = file.html_snippet(request)
+    
     context = {
         'form': form,
         'recent_files': recent_files,
@@ -47,6 +54,13 @@ def dashboard(request):
     paginator = Paginator(files_queryset, 12)  # Show 12 files per page
     page_number = request.GET.get('page')
     files = paginator.get_page(page_number)
+    
+    # Add full URLs to each file object
+    for file in files:
+        file.full_cdn_url = file.get_full_cdn_url(request)
+        file.full_download_url = file.get_full_download_url(request)
+        if file.is_image:
+            file.html_snippet_with_request = file.html_snippet(request)
     
     # Get file statistics - Fix total size calculation
     total_files = CDNFile.objects.count()

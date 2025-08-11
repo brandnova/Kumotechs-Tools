@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'webtester',
     'academic_tools',
     'cdn_tool',
+    'react_tools',
 ]
 
 MIDDLEWARE = [

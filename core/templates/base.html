@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Kumotechs - Productivity & Academic Tools{% endblock %}</title>
+    <title>{% block title %}Kumotechs - Productivity Tools{% endblock %}</title>
     <meta name="description" content="Streamline your workflow with Kumotechs - featuring private CDN management, URL shortening, image processing, and academic tools.">
     
     <!-- Favicon -->
@@ -21,6 +21,8 @@
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    {% block extra_head %}{% endblock %}
 </head>
 
 <body class="font-sans text-neutral-800 bg-gradient-bg" x-data="{ mobileMenuOpen: false, sidebarOpen: false }">
@@ -32,7 +34,7 @@
                 <div class="flex items-center space-x-2">
                     <a href="{% url 'home' %}" class="flex items-center space-x-2">
                         <img src="{% static 'images/logo.webp' %}" alt="Kumotechs Logo" class="w-7 h-7">
-                        <span class="text-lg font-bold text-neutral-900">Kumotechs</span>
+                        <span class="text-lg font-bold text-neutral-900">Kumotechs Tools</span>
                     </a>
                 </div>
                 
@@ -139,6 +141,18 @@
                             <i class="fas fa-tachometer-alt mr-2 text-neutral-400 text-xs"></i>
                             Website Tester
                         </a>
+                        <a href="{% url 'react_tools:notes' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'notes' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-book mr-2 text-neutral-400 text-xs"></i>
+                            Notes
+                        </a>
+                        <a href="{% url 'react_tools:uuid' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'uuid' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-fingerprint mr-2 text-neutral-400 text-xs"></i>
+                            UUID Generator
+                        </a>
+                        <a href="{% url 'react_tools:json_formatter' %}" class="sidebar-link group flex items-center px-2 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors {% if 'json' in request.path %}active bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                            <i class="fas fa-align-left mr-2 text-neutral-400 text-xs"></i>
+                            JSON Formatter
+                        </a>
                     </div>
                 </div>
             </nav>
@@ -178,6 +192,15 @@
                             <a href="{% url 'webtester:dashboard' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'webtester' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
                                 <i class="fas fa-tachometer-alt mr-2 text-xs"></i>Web Tester
                             </a>
+                            <a href="{% url 'react_tools:notes' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'notes' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-book mr-2 text-xs"></i>Notes
+                            </a>
+                            <a href="{% url 'react_tools:uuid' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'uuid' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-fingerprint mr-2 text-xs"></i>UUID Generator
+                            </a>
+                            <a href="{% url 'react_tools:json_formatter' %}" class="block px-3 py-2 text-sm font-medium rounded-md text-neutral-700 hover:bg-neutral-100 {% if 'json' in request.path %}bg-kumo-accent border-l-3 border-kumo-blue text-kumo-blue-dark{% endif %}">
+                                <i class="fas fa-align-left mr-2 text-xs"></i>JSON Formatter
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -207,7 +230,7 @@
                 <div class="md:col-span-2">
                     <div class="flex items-center space-x-2 mb-3">
                         <img src="{% static 'images/logo.webp' %}" alt="Kumotechs Logo" class="w-6 h-6">
-                        <span class="text-lg font-bold">Kumotechs</span>
+                        <span class="text-lg font-bold">Kumotechs Tools</span>
                     </div>
                     {% if user.is_authenticated and request.resolver_match.url_name == 'home' %}
                     <p class="text-neutral-300 mb-3 text-sm max-w-md">
@@ -215,15 +238,15 @@
                         Built for creators, developers, and academics who demand excellence.
                     </p>
                     <div class="flex space-x-3">
-                        <a href="#" class="text-neutral-400 hover:text-kumo-blue transition-colors duration-200">
-                            <i class="fab fa-twitter"></i>
+                        <a href="https://www.facebook.com/share/1A8xyXs1Ho/" class="text-neutral-400 hover:text-kumo-blue transition-colors duration-200">
+                            <i class="fab fa-facebook"></i>
                         </a>
-                        <a href="#" class="text-neutral-400 hover:text-kumo-blue transition-colors duration-200">
+                        {% comment %} <a href="#" class="text-neutral-400 hover:text-kumo-blue transition-colors duration-200">
                             <i class="fab fa-github"></i>
                         </a>
                         <a href="#" class="text-neutral-400 hover:text-kumo-blue transition-colors duration-200">
                             <i class="fab fa-linkedin"></i>
-                        </a>
+                        </a> {% endcomment %}
                     </div>
                     {% endif %}
                 </div>
@@ -253,12 +276,12 @@
             
             <div class="border-t border-neutral-800 mt-6 pt-6 flex flex-col sm:flex-row justify-between items-center">
                 <p class="text-neutral-400 text-xs">
-                    © {% now "Y" %} Kumotechs. All rights reserved.
+                    © {% now "Y" %} Kumotechs Tools. All rights reserved.
                 </p>
                 <div class="flex space-x-4 mt-3 sm:mt-0">
-                    <a href="#" class="text-neutral-400 hover:text-kumo-blue text-xs transition-colors duration-200">Privacy Policy</a>
-                    <a href="#" class="text-neutral-400 hover:text-kumo-blue text-xs transition-colors duration-200">Terms of Service</a>
-                    <a href="#" class="text-neutral-400 hover:text-kumo-blue text-xs transition-colors duration-200">Support</a>
+                    <a href="https://kumotechs.com/page/privacy-policy/" class="text-neutral-400 hover:text-kumo-blue text-xs transition-colors duration-200">Privacy Policy</a>
+                    <a href="https://kumotechs.com/page/terms-conditions/" class="text-neutral-400 hover:text-kumo-blue text-xs transition-colors duration-200">Terms of Service</a>
+                    <a href="https://kumotechs.com/contact/" class="text-neutral-400 hover:text-kumo-blue text-xs transition-colors duration-200">Support</a>
                 </div>
             </div>
         </div>

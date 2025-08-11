@@ -61,10 +61,10 @@
                     <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                         <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0">CDN URL:</label>
                         <div class="flex-1 min-w-0">
-                            <input value="{{ request.build_absolute_uri }}{{ file.cdn_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
+                            <input value="{{ file.full_cdn_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
                         </div>
                         <div class="flex space-x-1 flex-shrink-0">
-                            <button id="copy-cdn-{{ file.id }}" onclick="copyToClipboard('{{ request.build_absolute_uri }}{{ file.cdn_url }}', 'copy-cdn-{{ file.id }}')" 
+                            <button id="copy-cdn-{{ file.id }}" onclick="copyToClipboard('{{ file.full_cdn_url }}', 'copy-cdn-{{ file.id }}')" 
                                     class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <i class="fas fa-copy"></i>
                             </button>
@@ -74,10 +74,10 @@
                     <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                         <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0">Download:</label>
                         <div class="flex-1 min-w-0">
-                            <input value="{{ request.build_absolute_uri }}{{ file.download_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
+                            <input value="{{ file.full_download_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
                         </div>
                         <div class="flex space-x-1 flex-shrink-0">
-                            <button id="copy-dl-{{ file.id }}" onclick="copyToClipboard('{{ request.build_absolute_uri }}{{ file.download_url }}', 'copy-dl-{{ file.id }}')" 
+                            <button id="copy-dl-{{ file.id }}" onclick="copyToClipboard('{{ file.full_download_url }}', 'copy-dl-{{ file.id }}')" 
                                     class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <i class="fas fa-copy"></i>
                             </button>
@@ -92,10 +92,10 @@
                         <div class="flex flex-col sm:flex-row sm:items-start space-y-2 sm:space-y-0 sm:space-x-2">
                             <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-full sm:w-20 flex-shrink-0 sm:pt-1">HTML:</label>
                             <div class="flex-1 min-w-0">
-                                <textarea readonly rows="2" class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono resize-none dark:bg-gray-700 dark:text-white">{{ file.html_snippet }}</textarea>
+                                <textarea readonly rows="2" class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono resize-none dark:bg-gray-700 dark:text-white">{{ file.html_snippet_with_request }}</textarea>
                             </div>
                             <div class="flex space-x-1 flex-shrink-0">
-                                <button id="copy-html-{{ file.id }}" onclick="copyToClipboard('{{ file.html_snippet|escapejs }}', 'copy-html-{{ file.id }}')" 
+                                <button id="copy-html-{{ file.id }}" onclick="copyToClipboard('{{ file.html_snippet_with_request }}', 'copy-html-{{ file.id }}')" 
                                         class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <i class="fas fa-copy"></i>
                                 </button>

@@ -31,36 +31,70 @@
                 <div @drop.prevent="handleDrop" 
                      @dragover.prevent="dragActive = true" 
                      @dragleave.prevent="dragActive = false"
-                     :class="dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'"
-                     class="border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors cursor-pointer"
-                     @click="$refs.fileInput.click()">
+                     :class="{'border-blue-500 bg-blue-50 dark:bg-blue-900/20': dragActive, 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500': !dragActive && !selectedFiles.length, 'border-gray-200 dark:border-gray-600': selectedFiles.length}"
+                     class="border-2 border-dashed rounded-lg transition-colors cursor-pointer min-h-[200px] relative"
+                     @click="!selectedFiles.length && $refs.fileInput.click()">
                     
-                    <i class="fas fa-cloud-upload-alt text-3xl sm:text-4xl text-gray-400 dark:text-gray-500 mb-4"></i>
-                    <div class="space-y-2">
-                        <p class="text-base sm:text-lg font-medium text-gray-900 dark:text-white" x-text="dragActive ? 'Drop files here' : 'Drag files here or click to browse'"></p>
-                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Maximum file size: 50MB. Supported: JPG, PNG, PDF, ZIP, DOC, etc.</p>
+                    <!-- Default state when no files are selected -->
+                    <div x-show="!selectedFiles.length" class="absolute inset-0 flex flex-col items-center justify-center p-6 sm:p-8 text-center">
+                        <i class="fas fa-cloud-upload-alt text-3xl sm:text-4xl text-gray-400 dark:text-gray-500 mb-4"></i>
+                        <div class="space-y-2">
+                            <p class="text-base sm:text-lg font-medium text-gray-900 dark:text-white" x-text="dragActive ? 'Drop files here' : 'Drag files here or click to browse'"></p>
+                            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Maximum file size: 50MB. Supported: JPG, PNG, PDF, ZIP, DOC, etc.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview area when files are selected -->
+                    <div x-show="selectedFiles.length" class="p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-medium text-gray-900 dark:text-white">Selected Files</h3>
+                            <button @click.stop="selectedFiles = []; $refs.fileInput.value = ''" class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                Clear All
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-64 overflow-y-auto p-1">
+                            <template x-for="(file, index) in selectedFiles" :key="index">
+                                <div class="relative group border border-gray-200 dark:border-gray-600 rounded-md p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <!-- Remove button -->
+                                    <button @click.stop="removeFile(index)" 
+                                            class="absolute -top-2 -right-2 bg-white dark:bg-gray-700 rounded-full p-1 shadow-sm border border-gray-200 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/50 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                            title="Remove file">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                    
+                                    <!-- Preview Container -->
+                                    <div class="flex flex-col items-center">
+                                        <!-- Image Preview -->
+                                        <template x-if="file.type.startsWith('image/')">
+                                            <img :src="file.preview" class="w-full h-24 object-contain rounded mb-1" alt="Preview">
+                                        </template>
+                                        
+                                        <!-- File Icon for non-image files -->
+                                        <template x-if="!file.type.startsWith('image/')">
+                                            <div class="w-full h-24 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700 rounded mb-1">
+                                                <i :class="getFileIcon(file) + ' text-3xl text-gray-500 dark:text-gray-400 mb-1'"></i>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400" x-text="file.type.split('/').pop()"></span>
+                                            </div>
+                                        </template>
+                                        
+                                        <!-- File Info -->
+                                        <div class="w-full text-center">
+                                            <p class="text-xs text-gray-700 dark:text-gray-300 truncate" x-text="file.name"></p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatFileSize(file.size)"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                     
                     <input type="file" 
                            x-ref="fileInput"
-                           @change="selectedFiles = Array.from($event.target.files)"
+                           @change="selectedFiles = Array.from($event.target.files); generatePreviews()"
                            multiple 
                            class="hidden" 
                            name="files"
-                           accept="image/*,.pdf,.doc,.docx,.zip,.txt,.csv">
-                </div>
-
-                <!-- Selected Files Preview -->
-                <div x-show="selectedFiles && selectedFiles.length > 0" class="mt-4">
-                    <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Selected Files:</h3>
-                    <div class="space-y-2 max-h-40 overflow-y-auto">
-                        <template x-for="(file, index) in selectedFiles" :key="index">
-                            <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded text-sm">
-                                <span class="text-gray-700 dark:text-gray-300 truncate flex-1 mr-2" x-text="file.name"></span>
-                                <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap" x-text="formatFileSize(file.size)"></span>
-                            </div>
-                        </template>
-                    </div>
+                           accept="image/*,.pdf,.doc,.docx,.zip,.txt,.csv,.xls,.xlsx,.ppt,.pptx,.mp3,.mp4">
                 </div>
 
                 <!-- Additional Fields -->
@@ -86,7 +120,7 @@
                 <!-- Upload Button -->
                 <div class="mt-6">
                     <button type="submit" 
-                            :disabled="!selectedFiles || selectedFiles.length === 0 || uploading"
+                            :disabled="!selectedFiles.length || uploading"
                             :class="uploading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'"
                             class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
                         <i :class="uploading ? 'fas fa-spinner fa-spin' : 'fas fa-upload'" class="mr-2"></i>
@@ -133,7 +167,7 @@
             messageType: 'success',
 
             async uploadFiles() {
-                if (!this.selectedFiles || this.selectedFiles.length === 0) return;
+                if (!this.selectedFiles.length) return;
 
                 this.uploading = true;
                 const formData = new FormData();
@@ -173,6 +207,69 @@
             handleDrop(e) {
                 this.dragActive = false;
                 this.selectedFiles = Array.from(e.dataTransfer.files);
+                this.generatePreviews();
+            },
+
+            generatePreviews() {
+                this.selectedFiles.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            file.preview = e.target.result;
+                            this.selectedFiles = [...this.selectedFiles]; // Force update
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        file.preview = null;
+                        this.selectedFiles = [...this.selectedFiles]; // Force update
+                    }
+                });
+            },
+
+            removeFile(index) {
+                this.selectedFiles.splice(index, 1);
+                this.selectedFiles = [...this.selectedFiles]; // Force update
+                if (!this.selectedFiles.length) {
+                    this.$refs.fileInput.value = '';
+                }
+            },
+
+            getFileIcon(file) {
+                const extension = file.name.split('.').pop().toLowerCase();
+                const type = file.type.split('/')[0];
+                
+                // File type icons
+                if (file.type.startsWith('audio/')) return 'fas fa-file-audio';
+                if (file.type.startsWith('video/')) return 'fas fa-file-video';
+                
+                // Specific extensions
+                const extensionIcons = {
+                    pdf: 'fas fa-file-pdf',
+                    doc: 'fas fa-file-word',
+                    docx: 'fas fa-file-word',
+                    xls: 'fas fa-file-excel',
+                    xlsx: 'fas fa-file-excel',
+                    ppt: 'fas fa-file-powerpoint',
+                    pptx: 'fas fa-file-powerpoint',
+                    zip: 'fas fa-file-archive',
+                    rar: 'fas fa-file-archive',
+                    gz: 'fas fa-file-archive',
+                    txt: 'fas fa-file-alt',
+                    csv: 'fas fa-file-csv',
+                    json: 'fas fa-file-code',
+                    js: 'fas fa-file-code',
+                    html: 'fas fa-file-code',
+                    css: 'fas fa-file-code',
+                    py: 'fas fa-file-code',
+                    mp3: 'fas fa-file-audio',
+                    wav: 'fas fa-file-audio',
+                    mp4: 'fas fa-file-video',
+                    mov: 'fas fa-file-video',
+                    avi: 'fas fa-file-video'
+                };
+                
+                return extensionIcons[extension] || 
+                       (type === 'text' ? 'fas fa-file-alt' : 'fas fa-file');
             },
 
             showMessage(text, type = 'success') {

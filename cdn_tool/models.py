@@ -5,6 +5,7 @@ import uuid
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.conf import settings
 
 def upload_to_hashed_path(instance, filename):
     """Generate a hashed path for uploaded files"""
@@ -67,34 +68,52 @@ class CDNFile(models.Model):
 
     @property
     def cdn_url(self):
-        return f"{self.hash_id}/"
+        return f"cdn/{self.hash_id}/"
 
     @property
     def download_url(self):
-        return f"{self.hash_id}/download/"
+        return f"cdn/{self.hash_id}/download/"
 
     def html_snippet(self, request=None):
         """Generate HTML snippet for the file"""
         if self.is_image:
-            if request:
-                full_url = request.build_absolute_uri(self.cdn_url)
-            else:
-                # Simple fallback without using Sites framework
-                full_url = f"http://localhost:8000{self.cdn_url}"
+            full_url = self.get_full_cdn_url(request)
             return f'<img src="{full_url}" alt="{self.original_name}" />'
         return None
 
     def get_full_cdn_url(self, request=None):
         """Get full CDN URL with domain"""
         if request:
-            return request.build_absolute_uri(self.cdn_url)
-        return f"http://localhost:8000{self.cdn_url}"
+            return request.build_absolute_uri(f"/{self.cdn_url}")
+        
+        # Fallback using settings
+        domain = getattr(settings, 'ALLOWED_HOSTS', ['localhost'])[0]
+        if domain == '*':
+            domain = 'localhost:8000'
+        elif domain and not ':' in domain:
+            # Add protocol based on DEBUG setting
+            protocol = 'http' if settings.DEBUG else 'https'
+            return f"{protocol}://{domain}/{self.cdn_url}"
+        
+        # Final fallback
+        return f"http://localhost:8000/{self.cdn_url}"
 
     def get_full_download_url(self, request=None):
         """Get full download URL with domain"""
         if request:
-            return request.build_absolute_uri(self.download_url)
-        return f"http://localhost:8000{self.download_url}"
+            return request.build_absolute_uri(f"/{self.download_url}")
+        
+        # Fallback using settings
+        domain = getattr(settings, 'ALLOWED_HOSTS', ['localhost'])[0]
+        if domain == '*':
+            domain = 'localhost:8000'
+        elif domain and not ':' in domain:
+            # Add protocol based on DEBUG setting
+            protocol = 'http' if settings.DEBUG else 'https'
+            return f"{protocol}://{domain}/{self.download_url}"
+        
+        # Final fallback
+        return f"http://localhost:8000/{self.download_url}"
 
     @property
     def formatted_size(self):
@@ -129,3 +148,4 @@ class CDNFile(models.Model):
         self.download_count += 1
         self.last_accessed = timezone.now()
         self.save(update_fields=['download_count', 'last_accessed'])
+

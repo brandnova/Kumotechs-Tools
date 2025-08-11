@@ -31,28 +31,53 @@
                     <div class="flex items-center space-x-2">
                         <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-16 flex-shrink-0">CDN URL:</label>
                         <div class="flex-1 min-w-0">
-                            <input value="{{ request.build_absolute_uri }}{{ file.cdn_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
+                            <input value="{{ file.full_cdn_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
                         </div>
-                        <button onclick="copyToClipboard('{{ request.build_absolute_uri }}{{ file.cdn_url }}', 'recent-cdn-{{ file.id }}')" 
+                        <button onclick="copyToClipboard('{{ file.full_cdn_url }}', 'recent-cdn-{{ file.id }}')" 
                                 id="recent-cdn-{{ file.id }}"
                                 class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 flex-shrink-0">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
                     
-                    {% if file.html_snippet %}
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-16 flex-shrink-0">Download:</label>
+                        <div class="flex-1 min-w-0">
+                            <input value="{{ file.full_download_url }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <button onclick="copyToClipboard('{{ file.full_download_url }}', 'recent-dl-{{ file.id }}')" 
+                                id="recent-dl-{{ file.id }}"
+                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 flex-shrink-0">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    
+                    {% if file.html_snippet_with_request %}
                         <div class="flex items-center space-x-2">
                             <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-16 flex-shrink-0">HTML:</label>
                             <div class="flex-1 min-w-0">
-                                <input value="{{ file.html_snippet }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono dark:bg-gray-700 dark:text-white">
+                                <input value="{{ file.html_snippet_with_request }}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono dark:bg-gray-700 dark:text-white">
                             </div>
-                            <button onclick="copyToClipboard('{{ file.html_snippet|escapejs }}', 'recent-html-{{ file.id }}')" 
+                            <button onclick="copyToClipboard('{{ file.html_snippet_with_request|escapejs }}', 'recent-html-{{ file.id }}')" 
                                     id="recent-html-{{ file.id }}"
                                     class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 flex-shrink-0">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
                     {% endif %}
+
+                    <!-- Markdown Link -->
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-medium text-gray-700 dark:text-gray-300 w-16 flex-shrink-0">Markdown:</label>
+                        <div class="flex-1 min-w-0">
+                            <input value="{% if file.is_image %}![{{ file.original_name }}]({{ file.full_cdn_url }}){% else %}[{{ file.original_name }}]({{ file.full_download_url }}){% endif %}" readonly class="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded font-mono dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <button onclick="copyToClipboard('{% if file.is_image %}![{{ file.original_name }}]({{ file.full_cdn_url }}){% else %}[{{ file.original_name }}]({{ file.full_download_url }}){% endif %}', 'recent-md-{{ file.id }}')" 
+                                id="recent-md-{{ file.id }}"
+                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 flex-shrink-0">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         {% endfor %}

@@ -14,7 +14,8 @@ urlpatterns = [
     path('webanalyzer/', include('webanalyzer.urls', namespace='webanalyzer')),
     path('webtester/', include('webtester.urls', namespace='webtester')),
     path('academic_tools/', include('academic_tools.urls', namespace='academic_tools')),
-    path('cdn/', include('cdn_tool.urls')),
+    path('cdn/', include('cdn_tool.urls', namespace='cdn_tool')),
+    path('react_tools/', include('react_tools.urls', namespace='react_tools')),
     
 ]
 
